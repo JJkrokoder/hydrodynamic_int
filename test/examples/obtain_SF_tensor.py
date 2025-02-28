@@ -24,8 +24,8 @@ positions = np.random.rand(numberParticles, 3).astype(precision)
 
 # Obtain the mobility tensor
 mobilitytensor=getMobilityTensor(positions, solver)
-
 print(mobilitytensor)
+print(' ')
 
 # Theoretical Tensor
 theoreticalTensor = np.diag([1 / (6 * np.pi)] * (3 * numberParticles))

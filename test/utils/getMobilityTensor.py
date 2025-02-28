@@ -6,7 +6,6 @@ def getMobilityTensor(positions, solver):
     # Check the dimensions of the positions array
 
     numberparticles = positions.shape[0]
-    print(numberparticles)
     # Perform the algorithm to obtain the mobility tensor
     mobility_tensor = np.zeros((numberparticles*3, numberparticles*3))
     for i in range(numberparticles*3):
