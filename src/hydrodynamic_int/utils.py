@@ -1,9 +1,21 @@
 import numpy as np
 
 def getMobilityTensor(positions, solver):
-    # Check if the solver is initialized
-
-    # Check the dimensions of the positions array
+    '''
+    This function calculates the mobility tensor of a system of particles given their positions and a solver object
+    
+    Parameters
+    ----------
+    positions: numpy array
+        The positions of the particles in the system    
+    solver: SelfMobility object
+        The solver object used to calculate the mobility tensor
+    
+    Returns
+    -------
+    mobility_tensor: numpy array
+        The mobility tensor of the system
+    '''
 
     numberparticles = positions.shape[0]
     # Perform the algorithm to obtain the mobility tensor
