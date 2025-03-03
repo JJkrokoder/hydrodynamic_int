@@ -2,8 +2,6 @@ import numpy as np
 from libMobility import SelfMobility
 from hydrodynamic_int import getMobilityTensor
 
-
-
 # Define the number of particles in the system
 numberParticles = 2
 # Set calculation precision based on solver's precision
