@@ -1,6 +1,8 @@
 import numpy as np
 from libMobility import SelfMobility
-from utils.getMobilityTensor import getMobilityTensor
+from hydrodynamic_int import getMobilityTensor
+
+
 
 # Define the number of particles in the system
 numberParticles = 2
