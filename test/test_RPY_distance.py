@@ -64,7 +64,7 @@ def test_RPY_distance():
 
     # Now we need to check that the diagonal 3x3 blocks of the total tensor are equal to a 
     # diagonal 3x3 selfmobility matrix
-    
+    #
     # Create a 3x3 selfmobility matrix
     selfmobility_scalar = 1/(6*np.pi*viscosity*hydrodynamicRadius)
     selfmobility = np.eye(3)*selfmobility_scalar
@@ -73,17 +73,43 @@ def test_RPY_distance():
         for j in range(numberParticles):
             assert np.allclose(mobility_tensors[i, 3*j:3*j+3, 3*j:3*j+3], selfmobility, rtol=1e-3, atol=1e-6)
 
+    # Check if the non diagonal elements of the cross mobility tensor are close to zero
+    for i in range(len(distances)): # Loop over the distances
+        for j in range(numberParticles-1): # Loop over the particles
+            for k in range(j+1, numberParticles): # Loop over the particles
+                    # Loop over the coordinates
+                    for l in range(3):
+                        for m in range(l+1,3):
+                            assert np.allclose(mobility_tensors[i, 3*j+l, 3*k+m], 0, rtol=1e-3, atol=1e-6)
+                            assert np.allclose(mobility_tensors[i, 3*j+m, 3*k+l], 0, rtol=1e-3, atol=1e-6)
+
+    # Check if the perpendicular diagonal elements of the cross mobility tensor are equal (or close enough)
+    for i in range(len(distances)): # Loop over the distances
+        for j in range(numberParticles-1): # Loop over the particles
+            for k in range(j+1, numberParticles): # Loop over the particles
+                for l in range(1,3):
+                    assert np.allclose(mobility_tensors[i, 3*j+l, 3*k+l], mobility_tensors[i, 3*j+l, 3*k+l], rtol=1e-3, atol=1e-6)
+
     # Plot the distance dependence of the mobility tensor non diagonal blocks elements
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-    for i in range(3):
-        for j in range(3):
-                ax.plot(distances, mobility_tensors[:, 3+i, j]/selfmobility_scalar, label="$\mathcal{M}_{"+str(i)+str(j)+"}$")
-    ax.set_xlabel('Distance')
-    ax.set_ylabel('Mobility tensor element / $\mathcal{M}_0$')
+    for i in range(3): # Loop over the coordinates
+        for j in range(i, 3): # Loop over the coordinates
+                ax.plot(distances, mobility_tensors[:, i, 3+j]/selfmobility_scalar, label="$\\mathcal{M}_{"+coordinates[i]+coordinates[j]+"}$")
+    # Set the font size
+    plt.rcParams.update({'font.size': 16})
+    # Set the labels
+    ax.set_xlabel('x/a')
+    ax.set_ylabel('Mobility element ($\\mathcal{M}_0$)')
+    ax.xaxis.label.set_fontsize(16)
+    ax.yaxis.label.set_fontsize(16)
     ax.legend()
+    # Set the ticks
+    ax.tick_params(axis='both', which='major', labelsize=16)
     plt.tight_layout()
+    # Save the figure
     plt.savefig('mobility_tensor_distance_dependence.png')
 
+    
 test_RPY_distance()
     
 
