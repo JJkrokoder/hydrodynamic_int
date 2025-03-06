@@ -1,10 +1,12 @@
 % This is a file that contains the tracking of the activities related to the project during the first week of March 2025.
 % The activities are divided into groups and a summary of the progress is provided.
 
-\documentclass{article}
+\documentclass[12pt]{article} % 12pt font size
+\usepackage[a4paper, margin=1in]{geometry} % Adjust margins
 
 \usepackage{graphicx}
 \usepackage{dirtree}
+\usepackage{hyperref}
 
 \begin{document}
 \author{Joan Ronquillo}
@@ -13,7 +15,7 @@
 \maketitle
 
 This is a file that contains the tracking of the activities related to the Hydrodynamic
-Interactions project during the first week of March 2025.The activities are divided into
+Interactions project during the first week of March 2025. The activities are divided into
 groups and a summary of the progress is provided.
 
 \section{Initial Status of the Project}
@@ -37,8 +39,8 @@ The following tasks have been identified as potential areas of focus for the fir
 
 \section{Week Tracking}
 \subsection{Monday - March 3, 2025}
-The repository has been reorganized, and the functionalities of the gitignore, setup.py, 
-and \_\_init\_\_.py files have been discussed to manage the import of functions and modules. 
+The repository has been reorganized, and the functionalities of \path{.gitignore}, \path{setup.py},
+and \path{__init__.py} have been discussed to manage the import of functions and modules. 
 The use of pytest and the inclusion of asserts in the test functions are emphasized. 
 The correct functioning of the self-mobility tensor test is verified.
 
@@ -50,6 +52,19 @@ process.
 
 \subsection{Wednesday - March 5, 2025}
 The tasks for the week have been specified and the progress in documentation, code, and testing has been tracked.
+The script \path{test/test_RPY_distance.py} has been created to obtain 
+the RPY mobility for two particles as a function of the distance 
+between them. The script checks the symmetry of the tensor, the 
+reproduction of the self-mobility elements on the diagonal, the 
+symmetry of the elements of the off-diagonal blocks of cross mobility,
+the nullity of the elements corresponding to crossed coordinates 
+(the particles are on the x-axis), and the equivalence between the 
+two yy, zz terms (perpendicular to the axis that joins the particles) 
+of the cross mobility diagonal. The script also generates a graph
+with the dependence of the non-zero elements of the cross mobility
+with the distance between the particles, from 0.1 to 10 times the
+hydrodynamic radius of the particles. The ordering and storage of
+this type of graphs in the repository must still be studied.
 
 \section{Current Next Steps}
 The next steps for the project include:
@@ -59,5 +74,3 @@ The next steps for the project include:
     \item Tests for obtaining the RPY tensor. Discussion of the representation and its properties.
 \end{itemize}
 \end{document}
-
-
