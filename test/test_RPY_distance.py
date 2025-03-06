@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from libMobility import NBody
 from hydrodynamic_int import getMobilityTensor
+import os
+from datetime import datetime
 
 def plotMobilityTensor(mobility_tensor, distances, coordinates):
     '''
@@ -27,8 +29,7 @@ def plotMobilityTensor(mobility_tensor, distances, coordinates):
     # Plot the distance dependence of the mobility tensor non diagonal blocks elements
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
     for i in range(len(coordinates)): # Loop over the coordinates
-        for j in range(i, len(coordinates)): # Loop over the coordinates
-                ax.plot(distances, mobility_tensor[:, i, 3+j], label="$\\mathcal{M}_{"+coordinates[i]+coordinates[j]+"}$")
+        ax.plot(distances, mobility_tensor[:, i, 3+i], label="$\\mathcal{M}_{"+coordinates[i]+coordinates[i]+"}$")
     # Set the font size
     plt.rcParams.update({'font.size': 16})
     # Set the labels
@@ -41,7 +42,11 @@ def plotMobilityTensor(mobility_tensor, distances, coordinates):
     ax.tick_params(axis='both', which='major', labelsize=16)
     plt.tight_layout()
     # Save the figure
-    plt.savefig('mobility_tensor_distance_dependence.png')
+    # Create the output directory if it does not exist
+    if not os.path.exists('output'):
+        os.makedirs('output')
+    # Save the figure
+    plt.savefig('output/RPY_mobility_tensor_distance_dependence_.png')
 
 def get_theCrossMobRPY(distances):
     '''
