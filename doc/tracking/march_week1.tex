@@ -66,11 +66,19 @@ with the distance between the particles, from 0.1 to 10 times the
 hydrodynamic radius of the particles. The ordering and storage of
 this type of graphs in the repository must still be studied.
 
+\subsection{Thursday - March 6, 2025}
+Added checks to the test file \path{test_RPY_distance.py} that
+include the equivalence between the analytical result and the matrix
+obtained in the numerical calculation. The code has been refactored
+to separate functions, with one function for generating the graph and
+another for the array of analytical tensors. Additionally, the
+\path{output/} directory has been created to store the graphs generated
+by the test scripts.
+
 \section{Current Next Steps}
 The next steps for the project include:
-\begin{itemize}
-    \item An script that obtains the RPY mobility for two particles as a function of the distance between them.
+\begin{itemize} 
+    \item Analysys of RPY mobility for two particles as a function of the distance between them.
     \item Development of the Python module with the implementation functions.
-    \item Tests for obtaining the RPY tensor. Discussion of the representation and its properties.
 \end{itemize}
 \end{document}
