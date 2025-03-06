@@ -7,6 +7,7 @@
 \usepackage{graphicx}
 \usepackage{dirtree}
 \usepackage{hyperref}
+\usepackage[most]{tcolorbox}
 
 \begin{document}
 \author{Joan Ronquillo}
@@ -74,6 +75,26 @@ to separate functions, with one function for generating the graph and
 another for the array of analytical tensors. Additionally, the
 \path{output/} directory has been created to store the graphs generated
 by the test scripts.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/RPY_mobility_tensor_distance_dependence_.png}
+    \caption{RPY mobility for two particles as a function of the distance between them.}
+    \label{fig:RPY_mobility_tensor_distance_dependence}
+\end{figure}
+The figure shown in Figure \ref{fig:RPY_mobility_tensor_distance_dependence}
+depicts the RPY mobility for two particles as a function of the distance
+between them. The mobility decreases with distance, decaying exponentially
+when the particles do not overlap. It can be observed that the mobility is
+higher in the direction of the line connecting the particles and lower in
+the perpendicular directions. When the particles overlap, the mobility
+decreases linearly with distance. In the case of complete overlap where
+the particles are in the same position, the mobility is the same as the
+self-mobility of an isolated particle. No singularities in the mobility
+are observed in the case of complete overlap.
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!20!black, title=Doubt, colbacktitle=blue!20!white, coltitle=black]
+    What does the overlap of the particles mean?
+\end{tcolorbox}
 
 \section{Current Next Steps}
 The next steps for the project include:
