@@ -162,7 +162,7 @@ def test_RPY_distance():
                     assert np.allclose(mobility_tensors[i, 3*j+l, 3*k+l], mobility_tensors[i, 3*j+l, 3*k+l], rtol=1e-3, atol=1e-6)
 
     # Plot the mobility tensor distance dependence
-    plotMobilityTensor(mobility_tensors/selfmobility_scalar, distances/hydrodynamicRadius, coordinates)
+    # plotMobilityTensor(mobility_tensors/selfmobility_scalar, distances/hydrodynamicRadius, coordinates)
 
     # Check if the cross mobility block is equal to the theoretical matrix
 
@@ -174,9 +174,12 @@ def test_RPY_distance():
             for k in range(3):
                 assert np.allclose(mobility_tensors[i, j, 3+k], cross_mobility_the[i, j, k], rtol=1e-3, atol=1e-6)
 
+
     
-test_RPY_distance()
-    
+
+
+
+
 
 
 
