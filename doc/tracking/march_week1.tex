@@ -96,15 +96,31 @@ are observed in the case of complete overlap.
     What does the overlap of the particles mean?
 \end{tcolorbox}
 
-\section{Current Next Steps}
+\subsection{Friday - March 7, 2025}
+The plot functionality has been removed from the testing code,
+as discussed with Raúl regarding the convenience of creating plots
+in non-testing scripts. Additionally, emphasis has been placed on
+the importance of building good function interfaces (declarations,
+arguments, and returns) that simplify and minimize complexity for
+ease of use and scalability. A meeting with Rafa was held to provide
+an overview of the current project status, with a focus on tasks such
+as creating specific particle configurations and geometries,
+particularly the configuration of a sphere near a horizontal wall
+(potentially a liposome system). The idea is to apply an external
+force to the sphere and observe its displacement and deformation.
+This can be useful for future treatment of surface interactions
+and the modes of vibration of an immersed or nearby liposome in
+relation to a surface, as well as the decomposition of forces and
+velocities in the basis of vector spherical harmonics.
+
+\section{Next week tasks}
 The next steps for the project include:
 \begin{itemize} 
-    \item Analysys of RPY mobility for two particles as a function of the distance between them.
-    \item Exploration/creation of Python functions that handle vector spherical harmonics (VSH) and their properties. Study of the convenience of a class.
-    \item Creation of Python functions that allow the mobility tensor to be obtained in the basis of VSH.
     \item Modification of the structure of the \path{get_mobility_tensor} function, establishing default arguments and eliminating external initialization.
     \item Reading of Raúl's documents on software development.
-    \item Finalization and migration of documentation on VSH.
     \item Exploration/creation of Python functions that allow specific particle arrays and geometries to be established.
+    \item Exploration/creation of Python functions that handle vector spherical harmonics (VSH) and their properties. Study of the convenience of a class.
+    \item Creation of Python functions that allow the mobility tensor to be obtained in the basis of VSH.
+    \item Brennan's paper reading.
 \end{itemize}
 \end{document}
