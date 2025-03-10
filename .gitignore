@@ -3,6 +3,11 @@
 *build*
 *.aux*
 *.log*
-*synctex.gz*
-*.fls*
+*.bbl*
+*.bcf*
+*.blg*
 *.fdb_latexmk*
+*.fls*
+*.out*
+*.run.xml*
+*.synctex.gz*

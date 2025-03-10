@@ -1,0 +1,56 @@
+% This is a file that contains the tracking of the activities related to the project during the second week of March 2025.
+
+\documentclass[12pt]{article}
+
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage[backend=biber,style=numeric]{biblatex}
+\usepackage[most]{tcolorbox}
+
+\addbibresource{references.bib}
+
+\begin{document}
+
+\author{Joan Ronquillo}
+
+\title{Project Progress - Week 2 of March 2025}
+\maketitle
+
+This is a file that contains the tracking of the activities
+related to the Hydrodynamic Interactions project during the
+second week of March 2025. The activities are divided into
+groups and a summary of the progress is provided.
+
+\section{Initial Status of the Project}
+The project has made significant progress during the first week of March 2025. The key achievements include:
+\begin{itemize}
+    \item Implementation of the \path{.gitignore}, \path{setup.py}, and \path{__init__.py} files for modular development.
+    \item Creation, check and improvement of the \path{test_RPY_distance.py} script to obtain the RPY mobility for two particles as a function of the distance between them.
+    \item Meeting with Rafa to discuss the creation of specific particle configurations and geometries, particularly the configuration of a sphere near a horizontal wall.
+\end{itemize}
+So far, the project is developing in some areas:
+\begin{itemize}
+    \item The development of the Python module with the implementation functions for mobility tensor calculations.
+    \item The development of theory to express vectors in VSH basis.
+    \item The initial functions to establish specific particle arrangements and geometries.
+\end{itemize}
+
+\section{Potential Tasks for the Week}
+The following tasks are proposed for the week of March 10th to March 15th, 2025:
+\begin{itemize}
+    \item Modification of the structure of the \path{get_mobility_tensor} function, establishing default arguments and eliminating external initialization.
+    \item Reading of Raúl's documents on software development.
+    \item Exploration/creation of Python functions that allow specific particle arrays and geometries to be established.
+    \item Exploration/creation of Python functions that handle vector spherical harmonics (VSH) and their properties. Study of the convenience of a class.
+    \item Creation of Python functions that allow the mobility tensor to be obtained in the basis of VSH.
+    \item Brenner's paper \cite{BRENNER1961242} reading.
+\end{itemize}
+
+\section{Week Progress}
+
+\subsection{Monday, March 10th, 2025}
+The project status and potential tasks for the week have been established.
+
+\printbibliography
+
+\end{document}
