@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from libMobility import NBody
-from hydrodynamic_int import getMobilityTensor
+from hydrodynamic_int import getMobilityTensorRPY
 import os
 from datetime import datetime
 
@@ -95,22 +95,12 @@ def test_RPY_distance():
     numberParticles = 2
     # Coordinates of the system
     coordinates =['x', 'y', 'z']
-    # Define the viscosity and hydrodynamic radius
-    viscosity = 1.0
+    # Define the hydrodynamic radius
     hydrodynamicRadius = 1.0
-    # Set calculation precision based on solver's precision
+    # Define the viscosity
+    viscosity = 1.0
+    # Define the precision
     precision = np.float64
-    # STEP 1: Create solver object with open boundary conditions in all three dimensions
-    solver = NBody("open", "open", "open")
-    # STEP 2: Configure specific solver parameters
-    solver.setParameters(algorithm="advise", Nbatch=1, NperBatch=numberParticles)
-    # STEP 3: Initialize solver with global parameters
-    solver.initialize(
-      temperature=0.0,
-      viscosity=viscosity,
-      hydrodynamicRadius=hydrodynamicRadius,
-      numberParticles=numberParticles
-    )
 
     # Create a set of distances to calculate the mobility tensor
     distances = np.linspace(0.1, 10, 100)*hydrodynamicRadius
@@ -122,10 +112,8 @@ def test_RPY_distance():
     for distance in distances:
         # Set position of particle 2
         positions[1, 0] = distance
-        # Set the position of the particles
-        solver.setPositions(positions)
         # Obtain the mobility tensor
-        mobility_tensors.append(getMobilityTensor(positions, solver))
+        mobility_tensors.append(getMobilityTensorRPY(positions, hyd_radius=hydrodynamicRadius, viscosity=viscosity))
 
     # Mobility tensor array
     mobility_tensors = np.array(mobility_tensors)
