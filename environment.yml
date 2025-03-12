@@ -2,9 +2,12 @@ name: hydint_env
 channels:
   - conda-forge
   - defaults
+  - stochasticHydroTools
+
 dependencies:
   - python
   - numpy
   - matplotlib
   - scipy
   - pyvista
+  - libMobility
