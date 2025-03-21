@@ -6,10 +6,12 @@ channels:
 dependencies:
   - python
   - numpy
-  - matplotlib
   - scipy
   - pyvista
   - libMobility
   - pytest
+  - pip
+  - pip:  # These are the packages that will be installed with pip
+    - matplotlib
 
   
