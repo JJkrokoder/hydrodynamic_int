@@ -1,7 +1,7 @@
-from particles_mod.core.particles import Particles
+from particles_mod.core.particle import Particle
 import numpy as np
 
-def test_Particles():
+def test_Particle():
     '''
     Test the Particles class to store the positions of particles in the simulation.
 
@@ -14,20 +14,24 @@ def test_Particles():
     None
     '''
 
-    # Create a set of positions
-    positions = np.array([[0, 0], [1, 1], [2, 2], [3, 3]])
+    # Create a position
+    position = np.array([0.5, 0, 0])
+    # Create a velocity
+    velocity = np.array([1, 1, 1])
     # Create a set of properties
     properties = {'mass': 1.0, 'charge': 1.0}
     # Create a set of particles
-    particles = Particles(positions, properties)
-    # Add particles to the current list of particles
-    particles.add_particles([[4, 4], [5, 5]])
-    # Remove particles from the current list of particles
-    particles.remove_particles([0, 1])
-
-    # Check the positions of the particles
-    assert np.allclose(particles.positions, np.array([[2, 2], [3, 3], [4, 4], [5, 5]]))
-
-    # Check the properties of the particles
-    assert particles.properties == properties
+    particle = Particle(position = position, velocity = velocity, properties = properties)
+    # Check the particle's position
+    assert np.all(particle.position == position)
+    # Check the particle's velocity
+    assert np.all(particle.velocity == velocity)
+    # Check the particle's properties
+    assert particle.properties == properties
+    
+    # Update the particle's position
+    timestep = 0.5
+    particle.update_position(timestep)
+    # Check the particle's new position
+    assert np.all(particle.position == position + velocity * timestep)
 
