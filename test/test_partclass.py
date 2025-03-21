@@ -1,17 +1,9 @@
-from particles_mod.core.particle import Particle
+from particles_mod.core import *
 import numpy as np
 
 def test_Particle():
     '''
-    Test the Particles class to store the positions of particles in the simulation.
-
-    Parameters
-    ----------
-    None
-
-    Returns
-    -------
-    None
+    
     '''
 
     # Create a position
@@ -35,3 +27,13 @@ def test_Particle():
     # Check the particle's new position
     assert np.all(particle.position == position + velocity * timestep)
 
+    # Test the particles constructor
+    particle1 = Particle(position = np.array([0.5, 0, 0]), velocity = np.array([1, 1, 1]))
+    particle2 = Particle(position = np.array([0.5, 0.5, 0]), velocity = np.array([1, 1, 1]))
+    particles = Particles([particle1, particle2])
+    # Check positions array shape
+    assert particles.positions.shape == (2, particle1.position.shape[0])
+    # Check the particles positions
+    assert np.all(particles.positions == np.array([[0.5, 0, 0], [0.5, 0.5, 0]]))
+    # Check the particles velocities
+    assert np.all(particles.velocities == np.array([[1, 1, 1], [1, 1, 1]]))
