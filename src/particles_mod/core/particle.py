@@ -10,6 +10,8 @@ class Particle:
 
     Parameters
     ----------
+    id : int
+        Unique identifier for the particle.
     position : array_like
         Array particle's position.
     properties : dict, optional
@@ -17,10 +19,12 @@ class Particle:
     
     Attributes
     ----------
-    positions : ndarray
+    id : int
+        Unique identifier for the particle.
+    position : ndarray
         Array of particle's position.
     properties : dict
-        Dictionary of particle's additional properties such as mass, charge...
+        Dictionary of particle's additional properties such as velocity, mass, charge...
 
     Methods
     -------
@@ -28,38 +32,26 @@ class Particle:
         Update the particle's position.
     '''
 
-    def __init__(self, position: np.ndarray, velocity: np.ndarray = None, properties: dict = None):
-        
-        # Check the velocity array shape
-        if velocity is not None:
-            if len(position) != len(velocity): raise ValueError('Position and velocity must have the same length.')
-
-        self.position = np.array(position)
-        self.velocity = np.array(velocity) if velocity is not None else None
-        self.properties = properties or {}
-        
-    def update_position(self, timestep: float):
+    def __init__(self, id: int, position: np.ndarray, properties: dict = None):
         '''
-        Update the particle's position based on its own velocity.
+        Initialize a Particle instance.
 
         Parameters
         ----------
-        time_step : float
-            Time step of the simulation.
-
-
-        Examples
-        --------
-        >>> particle = Particle(position = np.array([0.5, 0, 0]), velocity = np.array([1, 1, 1]))
-        >>> particle.update_position(0.5)
-        >>> particle.position
-        array([0.5, 0, 0])
+        id : int
+            Unique identifier for the particle.
+        position : np.ndarray
+            Array representing the particle's position.
+        velocity : np.ndarray, optional
+            Array representing the particle's velocity. Default is None.
+        properties : dict, optional
+            Dictionary of additional properties for the particle. Default is None.
         '''
         
-        if self.velocity is not None:
-            self.position += self.velocity * timestep
-        else:
-            raise ValueError('Particle velocity is not defined.')
+        self.id = id
+        self.position = np.array(position)
+        self.properties = properties or {}
+        
 
         
 
