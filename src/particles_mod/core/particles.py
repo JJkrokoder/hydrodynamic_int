@@ -3,7 +3,6 @@ This file contains the Particle class which is used to store the properties of a
 '''
 
 import numpy as np
-from particles_mod.core.particle import Particle
 
 class Particles:
     '''
@@ -11,23 +10,52 @@ class Particles:
 
     Parameters
     ----------
-    particles : list
-        List of Particle objects.
-
+    labels : list
+        List containing the labels of the properties of the particles (ids and positions are mandatory).
+    data: list
+        List containing the data of the particles (ids and positions are mandatory).
+    
     Attributes
     ----------
-    particles : list
-        List of Particle objects.
-    positions : ndarray
-        Array of particle's positions.
-    velocities : ndarray
-        Array of particle's velocities.
+    ids : numpy.ndarray
+        Array containing the ids of the particles.
+    positions : numpy.ndarray
+        Array containing the positions of the particles.
     properties : dict
-        Dictionary of particle's additional properties such as mass, charge...
-
+        Dictionary containing optional properties of the particles.
+    
     Methods
+    -------
     '''
 
-    def __init__(self, particles: list[Particle]):
-        self.positions = np.array([particle.position for particle in particles]).reshape(len(particles), len(particles[0].position))
-        self.velocities = np.array([particle.velocity for particle in particles]).reshape(len(particles), len(particles[0].velocity))
+    def __init__(self, labels : list, data : np.ndarray):
+        '''
+        Constructor of the Particles class.
+        '''
+        # Check if the labels and data have the same length
+        if len(labels) != len(data):
+            raise ValueError('The labels and data must have the same length.')
+        # Check if the labels contain the mandatory labels
+        if 'id' not in labels:
+            raise ValueError('The labels must contain the id label.')
+        if 'position' not in labels:
+            raise ValueError('The labels must contain the position label.')
+        
+        # Check that the first element is an integer id and the second element is a position array
+        if not isinstance(data[0], int):
+            raise ValueError('The first element of the data must be an integer id.')
+        if not isinstance(data[1], np.ndarray):
+            raise ValueError('The second element of the data must be a position array.')
+        
+        # Initialize the ids, positions and properties
+        self.ids = np.array([data[0]])
+        self.positions = np.array([data[1]])
+        self.properties = {}
+        # Add the rest of the data to the properties
+        for i in range(2, len(labels)):
+            self.properties[labels[i]] = data[i]
+        
+        
+
+
+        

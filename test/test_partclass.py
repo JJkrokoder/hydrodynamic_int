@@ -11,7 +11,7 @@ def test_Particle():
     # Create a set of properties
     properties = {'mass': 1.0, 'charge': 1.0}
     # Create a set of particles
-    particle = Particle(id =1, position = position, properties = properties)
+    particle = Particle(id = 1, position = position, properties = properties)
     # Check the particle's position
     assert np.all(particle.position == position)
     # Check the particle's properties
