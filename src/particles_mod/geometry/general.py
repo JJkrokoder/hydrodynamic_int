@@ -23,8 +23,8 @@ class Geometry:
     
     Methods:
     --------
-    set_positions(particles : Particles)
-        Method to set the positions of the particles in the geometry
+    get_positions(particles : Particles)
+        Method to get the positions of the particles in the geometry
     '''
     
     def __init__(self, geometry_name : str, **parameters):
@@ -34,16 +34,22 @@ class Geometry:
         self.name = geometry_name
         self.parameters = parameters
 
-    def set_positions(self, particles : Particles):
+    def get_positions(self, particles : Particles):
         '''
-        Method to modify the positions attribute of the particles object according the geometry characteristics.
+        Method to generate a positions array according the geometry characteristics and the attributes of the particles.
         
         Parameters:
         -----------
         particles : Particles
             Particles object containing the positions of the particles.
         
+        Returns:
+        --------
+        numpy.ndarray
+            Array containing the positions of the particles in the geometry.
+        
         '''
-        raise NotImplementedError('The set_positions method must be implemented in the child class.')
+        
+        raise NotImplementedError('The get_positions method must be implemented in the child class.')
 
 
