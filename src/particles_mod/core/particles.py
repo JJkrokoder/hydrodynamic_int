@@ -50,7 +50,11 @@ class Particles:
         for label in labels:
             setattr(self, label, np.array([d[labels.index(label)] for d in data]))
 
+        # Check if the ids are unique
+        if len(np.unique(self.id)) != len(self.id):
+            raise ValueError('The ids must be unique.')
 
+        
     
                 
 

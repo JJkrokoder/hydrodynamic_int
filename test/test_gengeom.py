@@ -12,7 +12,9 @@ def test_geometry():
     '''
 
     # Create a Geometry object
-    geometry = Geometry('test', {'param1': 1})
-    #geometry.set_positions(particles)
+    geometry = Geometry('test')
     
-    # Test the attributes
+    # Check the name
+    assert geometry.name == 'test'
+
+

@@ -65,6 +65,16 @@ def test_particles():
     assert np.all(particles.material == np.array(['A', 'B', 'C']))
     ####################################################################################################
     
+    # Test the uniqueness of the ids
+    labels = ['id', 'position']
+    data = [[0, np.array([0.0, 0.0, 0.0])],
+            [0, np.array([1.0, 1.0, 1.0])]]
+    try:
+        particles = Particles(labels, data)
+    except ValueError as e:
+        assert str(e) == 'The ids must be unique.'
+    ####################################################################################################
+    
 
     
     

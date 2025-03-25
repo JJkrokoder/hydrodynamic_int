@@ -13,15 +13,13 @@ class Geometry:
     -----------
     geometry_name : str
         String containing the name of the geometry.
-    parameters : dict
-        Dictionary containing the parameters of the geometry.
+    parameters : 
 
     Attributes:
     -----------
     name : str
         String containing the name of the geometry.
-    parameters : dict
-        Dictionary containing the parameters of the geometry.
+    parameters : 
     
     Methods:
     --------
@@ -29,7 +27,7 @@ class Geometry:
         Method to set the positions of the particles in the geometry
     '''
     
-    def __init__(self, geometry_name : str, parameters : dict):
+    def __init__(self, geometry_name : str, **parameters):
         '''
         Constructor of the Geometry class.
         '''
