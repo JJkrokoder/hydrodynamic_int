@@ -61,14 +61,27 @@ simplifying the particles' class (Structure of Arrays philosophy).
 An initial structure for the geometry main class has been created,
 yet not tested.
 
+\subsection{Tuesday, March 25, 2025}
+The Geometry general class has been tested, and the 
+data parameter of the particles' class has been updated.
+Now the initialization is better automated and the data
+is a list of lists, being each list composed by particle's
+properties. A \path{SphereGeometry} subclass has been created
+A \path{get_position} method have been added to the geomtry
+classes, and plotting and setting position methods have been
+added to the particles class. All test have been passed and a
+plot of a 500 particle sphere has been created. The graphs and
+plotting scripts should be moved to a plotting module, and
+examples directory or compiled as commands/executables.
+
 \section{Current Next Steps}
 The next steps for the project are:
 \begin{itemize}
+    \item The managing of plotting outputs
     \item The development of the geometry module.
-    \item The development of an example geometry subclass.
     \item The development of the VSH module.
     \item Reading of Brenner's paper \cite{BRENNER1961242}.
-    \item Reading of Raúl's documents on GitHub basics.
+    \item Reading of Raúl's documents on GitHub basics and documentation generation.
 \end{itemize}
 
 \section{Summary}
