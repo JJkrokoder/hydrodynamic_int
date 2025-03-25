@@ -35,18 +35,17 @@ class Geometry:
         '''
         self.name = geometry_name
         self.parameters = parameters
-        self.particles = None
 
     def set_positions(self, particles : Particles):
         '''
-        Method to set the positions of the particles in the geometry.
+        Method to modify the positions attribute of the particles object according the geometry characteristics.
         
         Parameters:
         -----------
         particles : Particles
-            Particles object containing the properties of the particles.
+            Particles object containing the positions of the particles.
         
         '''
-        self.particles = particles
+        raise NotImplementedError('The set_positions method must be implemented in the child class.')
 
 
