@@ -3,6 +3,8 @@ This file contains the Particle class which is used to store the properties of a
 '''
 
 import numpy as np
+import matplotlib.pyplot as plt
+import os
 
 class Particles:
     '''
@@ -28,6 +30,12 @@ class Particles:
     
     Methods
     -------
+    __init__(labels, data)
+        Constructor of the Particles class.
+    get_numberparticles()
+        Method to get the number of particles in the system.
+    plot(output_file)
+        Method to plot the particles in the system.
     '''
 
     def __init__(self, labels : list, data : list[list]):
@@ -53,6 +61,52 @@ class Particles:
         # Check if the ids are unique
         if len(np.unique(self.id)) != len(self.id):
             raise ValueError('The ids must be unique.')
+    
+    def get_numberparticles(self):
+        '''
+        Method to get the number of particles in the system.
+        '''
+        return len(self.id)
+    
+    def set_positions(self, positions : np.ndarray):
+        '''
+        Method to set the positions of the particles in the system.
+
+        Parameters
+        ----------
+        positions : numpy.ndarray
+            Array containing the new positions of the particles.
+        '''
+        if positions.shape != self.position.shape:
+            raise ValueError('The positions array must have the same shape as the current positions array.')
+        
+        self.position = positions
+    
+    def plot(self, output_file : str, remove_file : bool = True):
+        '''
+        Method to plot the particles in the system.
+
+        Parameters
+        ----------
+        output_file : str
+            String containing the path to the output file.
+        '''
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(self.position[:, 0], self.position[:, 1], self.position[:, 2])
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+
+        plt.savefig(output_file)
+        plt.close()
+
+        if remove_file:
+            os.remove(output_file)
+        
+
+    
 
         
     

@@ -74,7 +74,36 @@ def test_particles():
     except ValueError as e:
         assert str(e) == 'The ids must be unique.'
     ####################################################################################################
-    
+
+    # Test the get_numberparticles method
+    labels = ['id', 'position']
+    data = [[0, np.array([0.0, 0.0, 0.0])],
+            [1, np.array([1.0, 1.0, 1.0])],
+            [2, np.array([2.0, 2.0, 2.0])]]
+    particles = Particles(labels, data)
+    assert particles.get_numberparticles() == 3
+    ####################################################################################################
+
+    # Test the plot method
+    labels = ['id', 'position']
+    data = [[0, np.array([0.0, 0.0, 0.0])],
+            [1, np.array([1.0, 1.0, 1.0])],
+            [2, np.array([2.0, 2.0, 2.0])]]
+    particles = Particles(labels, data)
+    particles.plot('test/output/particles.png')
+    ####################################################################################################
+
+    # Test the set_positions method
+    labels = ['id', 'position']
+    data = [[0, np.array([0.0, 0.0, 0.0])],
+            [1, np.array([1.0, 1.0, 1.0])],
+            [2, np.array([2.0, 2.0, 2.0])]]
+    particles = Particles(labels, data)
+    new_positions = np.array([[1.0, 0.0, 0.0], [2.0, 1.0, 1.0], [3.0, 2.0, 2.0]])
+    particles.set_positions(new_positions)
+    assert np.all(particles.position == new_positions)
+    ####################################################################################################
+
 
     
     
