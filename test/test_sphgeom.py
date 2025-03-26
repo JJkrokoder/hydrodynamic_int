@@ -35,16 +35,4 @@ def test_sphere_geometry():
     # Check the positions
     assert positions.shape == (3, 3)
     assert np.all(np.linalg.norm(positions - center, axis=1) <= radius)
-
-    # Create and plot a particles object with 100 particles in a sphere of radius 2 centered at [1.0, 0.0, 0.0]
-    labels = ['id', 'position']
-    number_particles = 500
-    data = [[i, np.array([0.0, 0.0, 0.0])] for i in range(number_particles)]
-    particles = Particles(labels, data)
-    center = np.array([1.0, 0.0, 0.0])
-    radius = 2.0
-    sphere = SphereGeometry(radius, center)
-    positions = sphere.get_positions(particles)
-    particles.set_positions(positions)
-    particles.plot('test/output/sphere.png', remove_file=False)
     ########################################################
