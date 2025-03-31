@@ -15,3 +15,8 @@ requires-python = ">=3.8"
 [tool.setuptools]
 package-dir = {"" = "src"}
 packages = ["hydrodynamic_int", "particles_mod"]
+
+# Add command line entry points
+[tool.poetry.scripts]
+plotter = "particles_mod.plotting.plotter:main"
+
