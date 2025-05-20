@@ -53,6 +53,47 @@ class HalfPipe:
         theta = np.linspace(-self.HP_amplitude, self.HP_amplitude, self.ntheta)
 
         return [[self.HP_radius*np.sin(t), j,  self.HP_radius*(1-np.cos(t))] for t in theta for j in y]
+    
+    def generate_pairbonds(self) -> list:
+        """
+        Generates the pair and angular bonds between the particles in the half-pipe structure.
+        
+        Returns
+        -------
+        pairbonds : list
+            List of the pair bonds between the particles.
+        """
+        
+        positions = self.generate_positions()
+        
+        pairbonds = []
+
+        # Horizontal bonds
+        for row_id in range(self.ntheta):
+            for column_id in range(self.ny - 1):
+                particle_id = row_id * self.ny + column_id
+                distance = np.linalg.norm(np.array(positions[particle_id]) - np.array(positions[particle_id + 1]))
+                pairbonds.append([particle_id, particle_id + 1, self.Kp, distance])
+
+        # Vertical bonds
+        for row_id in range(self.ntheta - 1):
+            for column_id in range(self.ny):
+                particle_id = row_id * self.ny + column_id
+                distance = np.linalg.norm(np.array(positions[particle_id]) - np.array(positions[particle_id + self.ny]))
+                pairbonds.append([particle_id, particle_id + self.ny, self.Kp, distance])
+
+        # Diagonal bonds
+        for row_cell_id in range(self.ntheta - 1):
+            for column_cell_id in range(self.ny - 1):
+                particle_id = row_cell_id * self.ny + column_cell_id
+                distance = np.linalg.norm(np.array(positions[particle_id]) - np.array(positions[particle_id + self.ny + 1]))
+                pairbonds.append([particle_id, particle_id + self.ny + 1, self.Kp, distance])
+                distance = np.linalg.norm(np.array(positions[particle_id + 1]) - np.array(positions[particle_id + self.ny]))
+                pairbonds.append([particle_id + 1, particle_id + self.ny, self.Kp, distance])
+
+        return pairbonds
+    
+    
 
 
 
