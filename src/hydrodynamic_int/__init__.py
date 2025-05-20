@@ -1,4 +1,5 @@
 from .utils import getMobilityTensor, getMobilityTensorRPY
+from .hessian import *
 
 __all__ = [
     'getMobilityTensor',

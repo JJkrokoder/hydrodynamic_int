@@ -30,7 +30,6 @@ def test_RPY():
       temperature=0.0,
       viscosity=1.0,
       hydrodynamicRadius=1.0,
-      numberParticles=numberParticles
     )
 
     # Create position where partircles are separated by 10 unit in x direction

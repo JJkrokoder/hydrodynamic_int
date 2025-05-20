@@ -60,7 +60,7 @@ def getMobilityTensorRPY(positions, hyd_radius = 1.0, viscosity = 1.0, boundary_
         temperature=0.0,
         viscosity=viscosity,
         hydrodynamicRadius=hyd_radius,
-        numberParticles=positions.shape[0]
+        
     )
     solver.setPositions(positions)
 
