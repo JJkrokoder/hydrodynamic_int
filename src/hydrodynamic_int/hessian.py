@@ -115,7 +115,7 @@ def create_simulation(positions, bonds, output_file_path):
 
     simulation["state"] = {
         "labels": ["id", "position"],
-        "data": positions
+        "data": [[i, positions[i]] for i in range(len(positions))]
     }
     simulation["topology"] = {
         "structure": {

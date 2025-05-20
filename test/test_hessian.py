@@ -6,7 +6,7 @@ def create_particle_pair():
     Create a pair of particles with some position and bond.
     """
     # Create 2 positions
-    pos = [[x, [x - 0.5, 0.0, 0.0]] for x in range(2)]
+    pos = [[x - 0.5, 0.0, 0.0] for x in range(2)]
     
     # Create a bonds dictionary
     bonds = {

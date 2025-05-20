@@ -38,7 +38,8 @@ def test_HP_pairbonds():
     Kspring = 2.0
 
     half_pipe = HalfPipe(Length, Radius, STheta, Kp=Kspring)
-    bonds = half_pipe.generate_pairbonds()
+    positions = half_pipe.generate_positions()
+    bonds = half_pipe.generate_pairbonds(positions)
 
     # check if the first particle is bonded with the second one
     assert bonds[0][1] == 1, f"Particle 0 is not bonded with particle 1: {bonds[0][1]} != 1"
@@ -53,5 +54,57 @@ def test_HP_pairbonds():
 
     # check if the distance for the third bond is correct
     assert np.isclose(bonds[2][3], half_pipe.HP_length / (half_pipe.ny-1)), f"Distance for bond 2 is incorrect: {bonds[2][3]} != {half_pipe.HP_length / (half_pipe.ny-1)}"
+
+def test_HP_angularbonds():
+    """
+    Test the HalfPipe class for the correct calculation of angular bonds.
+    """
+    Length = 10.0  
+    Radius = 5.0 
+    STheta = np.pi / 2
+    Kspring = 3.0
+
+    half_pipe = HalfPipe(Length, Radius, STheta, Ka=Kspring)
+    positions = half_pipe.generate_positions()
+    bonds = half_pipe.generate_anglebonds(positions)
+
+    # check if the first particle is bonded with the second one and the third one
+    assert bonds[0][1] == 1, f"Particle 0 is not bonded with particle 1: {bonds[0][1]} != 1"
+    assert bonds[0][2] == 2, f"Particle 0 is not bonded with particle 2: {bonds[0][4]} != 2"
+
+    # check if all the bonds spring constant are equal to Kspring
+    for i in range(half_pipe.nparticles):
+        assert bonds[i][3] == Kspring, f"Particle {i} spring constant is not correct: {bonds[i][2]} != {Kspring}"
+    
+    # check if the number of bonds is correct
+    nangularbonds = 2*(half_pipe.ny*half_pipe.ntheta - half_pipe.ny - half_pipe.ntheta)
+    assert len(bonds) == nangularbonds, f"Number of angular bonds is incorrect: {len(bonds)} != {nangularbonds}"
+
+    # check if the angle for the first bond is correct
+    assert np.isclose(bonds[0][4], np.pi), f"Angle for bond 0 is incorrect: {bonds[0][4]} != {np.pi/2}"
+
+def test_HP_strconstr():
+    """
+    Test the function that constructs the half-pipe positions and bonds.
+    """
+    Length = 10.0  
+    Radius = 5.0 
+    STheta = np.pi / 2
+    Kspring = 2.0
+
+    positions, bonds = construct_structure(Length, Radius, STheta, Kp=Kspring)
+
+    # check if pairbonds and anglebonds elements of the bond have been created
+    assert "pairbonds" in bonds, f"pairbonds not found in bonds dictionary: {bonds}"
+    assert "anglebonds" in bonds, f"anglebonds not found in bonds dictionary: {bonds}"
+
+    #check if their types are correct
+    assert bonds["pairbonds"]["type"] == ["Bond2", "Harmonic"], f"pairbonds type is incorrect: {bonds['pairbonds']['type']}"
+    assert bonds["anglebonds"]["type"] == ["Bond3", "HarmonicAngular"], f"anglebonds type is incorrect: {bonds['anglebonds']['type']}"
+
+    # check if the labels of these elements are correct
+    assert bonds["pairbonds"]["labels"] == ["id_i", "id_j", "K", "r0"], f"pairbonds labels are incorrect: {bonds['pairbonds']['labels']}"
+    assert bonds["anglebonds"]["labels"] == ["id_i", "id_j", "id_k", "K", "theta0"], f"anglebonds labels are incorrect: {bonds['anglebonds']['labels']}"
+
 
 
