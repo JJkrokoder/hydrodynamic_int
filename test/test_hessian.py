@@ -41,7 +41,6 @@ def test_hessian_symmetry():
     # Check hessian symmetry
     assert np.allclose(hessian, hessian.transpose(1, 0, 3, 2)), "Hessian matrix is not symmetric"
 
-
 def test_hessian_diagonalization():
     """
     Test the diagonalization of the Hessian matrix.
@@ -74,3 +73,7 @@ def test_hessian_diagonalization():
     print(np.diag(eigenvalues))
     assert np.allclose(diagonalized_hessian, np.diag(eigenvalues)), "Eigenvectors matrix does not diagonalize the hessian matrix correctly"
     
+
+
+
+

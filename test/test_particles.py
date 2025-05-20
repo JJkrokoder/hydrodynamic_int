@@ -90,7 +90,6 @@ def test_particles():
             [1, np.array([1.0, 1.0, 1.0])],
             [2, np.array([2.0, 2.0, 2.0])]]
     particles = Particles(labels, data)
-    particles.plot('test/output/particles.png')
     ####################################################################################################
 
     # Test the set_positions method
