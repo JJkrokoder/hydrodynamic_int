@@ -69,8 +69,6 @@ class HalfPipe:
             Pair bonds between the particles.
         """
         
-        positions = self.generate_positions()
-        
         pairbonds = []
 
         # Horizontal bonds
