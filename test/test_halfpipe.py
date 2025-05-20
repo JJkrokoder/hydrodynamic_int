@@ -55,6 +55,18 @@ def test_HP_pairbonds():
     # check if the distance for the third bond is correct
     assert np.isclose(bonds[2][3], half_pipe.HP_length / (half_pipe.ny-1)), f"Distance for bond 2 is incorrect: {bonds[2][3]} != {half_pipe.HP_length / (half_pipe.ny-1)}"
 
+    # Search for the bonds where particle npaticles-ny appears
+    selected_bonds = [bond for bond in bonds if (bond[0] == half_pipe.nparticles - half_pipe.ny or bond[1] == half_pipe.nparticles - half_pipe.ny)]
+    assert len(selected_bonds) == 3, f"Particle {half_pipe.nparticles - half_pipe.ny} should be bonded with 3 particles, but found {len(selected_bonds)} bonds: {selected_bonds}"
+
+    selected_bonds = [bond for bond in bonds if (bond[0] == half_pipe.nparticles - 1 or bond[1] == half_pipe.nparticles - 1)]
+    assert len(selected_bonds) == 3, f"Particle {half_pipe.nparticles - 1} should be bonded with 3 particles, but found {len(selected_bonds)} bonds: {selected_bonds}"
+    # check if this particles is bonded with nparticles - 2, nparticles - half_pipe.ny - 2 and nparticles - half_pipe.ny - 1
+    assert (half_pipe.nparticles - 2) in [bond[0] for bond in selected_bonds] or (half_pipe.nparticles - 2) in [bond[1] for bond in selected_bonds], f"Particle {half_pipe.nparticles - 2} should be bonded with particle {half_pipe.nparticles - 1}, but not found in the bonds: {selected_bonds}"
+    assert (half_pipe.nparticles - half_pipe.ny - 2) in [bond[0] for bond in selected_bonds] or (half_pipe.nparticles - half_pipe.ny - 2) in [bond[1] for bond in selected_bonds], f"Particle {half_pipe.nparticles - half_pipe.ny - 2} should be bonded with particle {half_pipe.nparticles - 1}, but not found in the bonds: {selected_bonds}"
+    assert (half_pipe.nparticles - half_pipe.ny - 1) in [bond[0] for bond in selected_bonds] or (half_pipe.nparticles - half_pipe.ny - 1) in [bond[1] for bond in selected_bonds], f"Particle {half_pipe.nparticles - half_pipe.ny - 1} should be bonded with particle {half_pipe.nparticles - 1}, but not found in the bonds: {selected_bonds}"
+
+
 def test_HP_angularbonds():
     """
     Test the HalfPipe class for the correct calculation of angular bonds.
@@ -82,6 +94,15 @@ def test_HP_angularbonds():
 
     # check if the angle for the first bond is correct
     assert np.isclose(bonds[0][4], np.pi), f"Angle for bond 0 is incorrect: {bonds[0][4]} != {np.pi/2}"
+
+    # check if the last particle bonds are correct
+    selected_bonds = [bond for bond in bonds if (bond[0] == half_pipe.nparticles - 1 or bond[1] == half_pipe.nparticles - 1 or bond[2] == half_pipe.nparticles - 1)]
+    assert len(selected_bonds) == 2, f"Particle {half_pipe.nparticles - 1} should be bonded with 2 particles, but found {len(selected_bonds)} bonds: {selected_bonds}"
+    # check if this particles is bonded with nparticles - 2, nparticles - 3, nparticles - half_pipe.ny - 1 and nparticles - 2 * half_pipe.ny - 1
+    assert (half_pipe.nparticles - 2) in [bond[0] for bond in selected_bonds] or (half_pipe.nparticles - 2) in [bond[1] for bond in selected_bonds] or (half_pipe.nparticles - 2) in [bond[2] for bond in selected_bonds], f"Particle {half_pipe.nparticles - 2} should be bonded with particle {half_pipe.nparticles - 1}, but not found in the bonds: {selected_bonds}"
+    assert (half_pipe.nparticles - 3) in [bond[0] for bond in selected_bonds] or (half_pipe.nparticles - 3) in [bond[1] for bond in selected_bonds] or (half_pipe.nparticles - 3) in [bond[2] for bond in selected_bonds], f"Particle {half_pipe.nparticles - 3} should be bonded with particle {half_pipe.nparticles - 1}, but not found in the bonds: {selected_bonds}"
+    assert (half_pipe.nparticles - half_pipe.ny - 1) in [bond[0] for bond in selected_bonds] or (half_pipe.nparticles - half_pipe.ny - 1) in [bond[1] for bond in selected_bonds] or (half_pipe.nparticles - half_pipe.ny - 1) in [bond[2] for bond in selected_bonds], f"Particle {half_pipe.nparticles - half_pipe.ny - 1} should be bonded with particle {half_pipe.nparticles - 1}, but not found in the bonds: {selected_bonds}"
+    assert (half_pipe.nparticles - 2 * half_pipe.ny - 1) in [bond[0] for bond in selected_bonds] or (half_pipe.nparticles - 2 * half_pipe.ny - 1) in [bond[1] for bond in selected_bonds] or (half_pipe.nparticles - 2 * half_pipe.ny - 1) in [bond[2] for bond in selected_bonds], f"Particle {half_pipe.nparticles - 2 * half_pipe.ny - 1} should be bonded with particle {half_pipe.nparticles - 1}, but not found in the bonds: {selected_bonds}"
 
 def test_HP_strconstr():
     """
