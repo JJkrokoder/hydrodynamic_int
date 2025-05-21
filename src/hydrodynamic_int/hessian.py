@@ -43,7 +43,7 @@ def obtain_Box(positions: Iterable[float]) -> list:
     box = [(max_coords[i] - min_coords[i])*1.5 for i in range(3)]
     return box
 
-def create_simulation(positions : Iterable[float], bonds: dict, output_file_path: str) -> pyUAMMD.simulation:
+def create_simulation(positions : Iterable[float], bonds: dict, output_file_path: str, current_dir : str = None) -> pyUAMMD.simulation:
     """
     Create a pyUAMMD simulation object with the given positions and bonds. Specifies an
     output file for the Hessian matrix.
@@ -160,10 +160,26 @@ def create_simulation(positions : Iterable[float], bonds: dict, output_file_path
             }
         }
     }
+
+    if current_dir is not None:
+        
+        results_dir = os.path.join(current_dir, "results")
+        if not os.path.exists(results_dir):
+            os.makedirs(results_dir)
+
+        simulation["simulationStep"]["output"] = {
+            "type": ["WriteStep", "WriteStep"],
+            "parameters": {
+                "intervalStep": 1,
+                "outputFilePath": os.path.join(results_dir, "output.txt"),
+                "outputFormat": "sp",
+                "pbc": True
+            }
+        }
     return simulation
 
 
-def obtainHessian (positions: Iterable[float] , bonds: dict) -> np.ndarray:
+def obtainHessian (positions: Iterable[float] , bonds: dict, create_sp : bool = False) -> np.ndarray:
     """
     Obtain the Hessian matrix from the positions and bonds.
     
@@ -181,7 +197,8 @@ def obtainHessian (positions: Iterable[float] , bonds: dict) -> np.ndarray:
     """
     with tempfile.TemporaryDirectory() as tmpdir:
         hessian_file_path = os.path.join(tmpdir, "hessian.txt")
-        simulation = create_simulation(positions, bonds, hessian_file_path)
+        if create_sp: current_dir = os.getcwd()
+        simulation = create_simulation(positions, bonds, hessian_file_path, current_dir)
         simulation.run()
         hessian = read_hessian_file(hessian_file_path)
         
