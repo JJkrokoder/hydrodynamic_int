@@ -197,8 +197,11 @@ def obtainHessian (positions: Iterable[float] , bonds: dict, create_sp : bool = 
     """
     with tempfile.TemporaryDirectory() as tmpdir:
         hessian_file_path = os.path.join(tmpdir, "hessian.txt")
-        if create_sp: current_dir = os.getcwd()
-        simulation = create_simulation(positions, bonds, hessian_file_path, current_dir)
+        if create_sp:
+            current_dir = os.getcwd()
+            simulation = create_simulation(positions, bonds, hessian_file_path, current_dir)
+        else:
+            simulation = create_simulation(positions, bonds, hessian_file_path)
         simulation.run()
         hessian = read_hessian_file(hessian_file_path)
         
