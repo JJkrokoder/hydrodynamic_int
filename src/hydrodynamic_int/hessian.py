@@ -23,44 +23,60 @@ def read_hessian_file(file_path):
     hessian[i, j] = matrices
     return hessian
 
-def obtain_Box(positions):
+def obtain_Box(positions: Iterable[float]) -> list:
     """
     Obtain the simulation box from the positions of the particles.
     
     Parameters
     ----------
-    positions : list of tuples
-        A list of tuples representing the positions of atoms.
+    positions :
+        Positions of atoms.
     
     Returns
     -------
-    box : numpy.ndarray
+    box :
         The simulation box dimensions.
     """
 
-    # Create a box based on the maximum and minimum coordinates differences of the particles
     max_coords = np.max(positions[:][1], axis=0)
     min_coords = np.min(positions[:][1], axis=0)
     box = [(max_coords[i] - min_coords[i])*1.5 for i in range(3)]
     return box
 
-def create_simulation(positions, bonds, output_file_path):
+def create_simulation(positions : Iterable[float], bonds: dict, output_file_path: str) -> pyUAMMD.simulation:
     """
-    Create a pyUAMMD simulation object with the given positions and bonds.
-    
+    Create a pyUAMMD simulation object with the given positions and bonds. Specifies an
+    output file for the Hessian matrix.
+
     Parameters
     ----------
-    positions : list of tuples
-        A list of tuples representing the positions of atoms.
-    bonds : list of tuples
-        A list of tuples representing the bonds between atoms.
-    output_file_path : str
-        The path to the output file for the simulation.
+    positions :
+        Positions of atoms. This should be a list of lists or a numpy array of shape (n, 3),
+        where n is the number of atoms and 3 represents the x, y, z coordinates.
+    bonds :
+        A UAMMD-structured dictionary representing the bonds between atoms. This should
+        contain information about the types of bonds and their parameters.
+    output_file_path :
+        The path to the output file for the simulation. This file will be used to
+        store the Hessian matrix after the simulation is run.
     
     Returns
     -------
     simulation : pyUAMMD.simulation
         The created pyUAMMD simulation object.
+
+    Example
+    -------
+    >>> positions = [[0, 0, 0], [1, 1, 1], [2, 2, 2]]
+    >>> bonds = {"myBond": {"type": ["Bond", "Harmonic"], "parameters": {}, "labels": ["id_i", "id_j", "K", "r0"]}}
+    >>> bonds["myBond"]["data"] = [[0, 1, 1.0, 1.0], [1, 2, 1.0, 1.0]]
+    >>> output_file_path = "hessian.txt"
+    >>> simulation = create_simulation(positions, bonds, output_file_path)
+
+    Notes
+    -----
+    All particles are assumed to be of type "A" with a mass of 1.0, radius of 0.5,
+    and charge of 0.0.
     """
 
     # Create a pyUAMMD simulation object
@@ -123,6 +139,7 @@ def create_simulation(positions, bonds, output_file_path):
             "data": [[i, "A"] for i in range(len(positions))]
         }
     }
+
     # Initialize the force field dictionary
     simulation["topology"]["forceField"] = bonds
     # Configure Simulation Steps
