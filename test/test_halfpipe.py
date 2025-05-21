@@ -66,8 +66,6 @@ def test_HP_pairbonds():
     assert len(verticalbonds) == nverticalbonds, f"Number of vertical bonds is incorrect: {len(verticalbonds)} != {nverticalbonds}"
     assert len(diagonalbonds) == ndiagonalbonds, f"Number of diagonal bonds is incorrect: {len(diagonalbonds)} != {ndiagonalbonds}"
     
-    print("number of particles in y direction: ", half_pipe.ny)
-
     for i in range(half_pipe.nparticles):
         particle_bonds = [bond for bond in bonds if bond[0] == i or bond[1] == i]
         assert len(particle_bonds) >= 3 and len(particle_bonds) <= 8, f"Particle {i} has an incorrect number of bonds: {len(particle_bonds)} is not between 3 and 8"
@@ -77,7 +75,9 @@ def test_HP_pairbonds():
             assert len(particle_bonds) == 5, f"Particle {i} has an incorrect number of bonds: {len(particle_bonds)} != 5"
         else:
             assert len(particle_bonds) == 8, f"Particle {i} has an incorrect number of bonds: {len(particle_bonds)} != 8"
-    
+            for bond in particle_bonds:
+                assert (bond[0] in [i-1, i+1, i-half_pipe.ny, i+half_pipe.ny, i-half_pipe.ny-1, i+half_pipe.ny-1, i-half_pipe.ny+1, i+half_pipe.ny+1] or bond[1] in [i-1, i+1, i-half_pipe.ny, i+half_pipe.ny, i-half_pipe.ny-1, i+half_pipe.ny-1, i-half_pipe.ny+1, i+half_pipe.ny+1])
+                                
 def test_HP_angularbonds():
     """
     Test the HalfPipe class for the correct calculation of angular bonds.
@@ -127,7 +127,6 @@ def test_HP_angularbonds():
                        half_pipe.nparticles - 3 * half_pipe.ny + 1, half_pipe.nparticles - 2 * half_pipe.ny - 2,
                        half_pipe.nparticles - 2 * half_pipe.ny + 2, half_pipe.nparticles - half_pipe.ny - 3],
     
-
     for i in range(half_pipe.nparticles):
         particle_bonds = [bond for bond in bonds if bond[0] == i or bond[1] == i or bond[2] == i]
         assert len(particle_bonds) >= 2 and len(particle_bonds) <= 6, f"Particle {i} has an incorrect number of angular bonds: {len(particle_bonds)} is not between 2 and 6"
@@ -141,7 +140,9 @@ def test_HP_angularbonds():
             assert len(particle_bonds) == 5, f"Particle {i} has an incorrect number of angular bonds: {len(particle_bonds)} != 5"
         else:
             assert len(particle_bonds) == 6, f"Particle {i} has an incorrect number of angular bonds: {len(particle_bonds)} != 6"
-
+            for bond in particle_bonds:
+                assert (bond[0] in [i-1, i-2, i+1, i+2, i-half_pipe.ny, i+half_pipe.ny, i-half_pipe.ny*2, i+half_pipe.ny*2] or bond[1] in [i-1, i-2, i+1, i+2, i-half_pipe.ny, i+half_pipe.ny, i-half_pipe.ny*2, i+half_pipe.ny*2] or bond[2] in [i-1, i-2, i+1, i+2, i-half_pipe.ny, i+half_pipe.ny, i-half_pipe.ny*2, i+half_pipe.ny*2])
+    
     last_particle_bonds = [bond for bond in bonds if bond[0] == half_pipe.nparticles-1 or bond[1] == half_pipe.nparticles-1 or bond[2] == half_pipe.nparticles-1]
     assert len(last_particle_bonds) == 2, f"Last particle has an incorrect number of angular bonds: {len(last_particle_bonds)} != 2"
 
