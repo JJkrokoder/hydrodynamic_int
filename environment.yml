@@ -13,5 +13,6 @@ dependencies:
   - pip
   - pip:  # These are the packages that will be installed with pip
     - matplotlib
+    - pyvista
 
   
