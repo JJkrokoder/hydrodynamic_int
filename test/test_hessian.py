@@ -6,7 +6,7 @@ def create_particle_pair():
     Create a pair of particles with some position and bond.
     """
     # Create 2 positions
-    pos = [[x - 0.5, 0.0, 0.0] for x in range(2)]
+    pos = [[x - 1.0, 0.0, 0.0] for x in range(3)]
     
     # Create a bonds dictionary
     bonds = {
@@ -14,7 +14,8 @@ def create_particle_pair():
             "type": ["Bond2", "Harmonic"],
             "parameters": {},
             "labels": ["id_i", "id_j", "K", "r0"],
-            "data": [[0, 1, 1.0, 1.0]]
+            "data": [[0, 1, 1.0, 1.0],
+                     [1, 2, 1.0, 1.0]]
         }
     }
     

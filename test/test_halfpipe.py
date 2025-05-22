@@ -23,7 +23,7 @@ def test_HPpositions():
     for i in range(half_pipe.nparticles):
         assert np.isclose(np.sqrt(positions[i][0]**2 + (positions[i][2]-Radius)**2), Radius), f"Particle {i} is not at the correct radial distance: {np.sqrt(positions[i][0]**2 + positions[i][2]**2)} != {half_pipe.Radius}"
 
-    # check if all the first ny particles are a the same x and z coordinates
+    # check if all the first ny particles are at the same x and z coordinates
     for i in range(half_pipe.ny):
         assert np.isclose(positions[i][0], -Radius), f"Particle {i} is not at the correct x coordinate: {positions[i][0]} != {-Radius}"
         assert np.isclose(positions[i][2], Radius), f"Particle {i} is not at the correct z coordinate: {positions[i][2]} != {Radius}"
@@ -41,38 +41,49 @@ def test_HP_pairbonds():
     positions = half_pipe.generate_positions()
     bonds = half_pipe.generate_pairbonds(positions)
 
-    # check if the first particle is bonded with the second one
+    horizontal_distance = half_pipe.HP_length / (half_pipe.ny-1)
+    vertical_distance = 2 * half_pipe.HP_radius * np.sin(STheta/(half_pipe.ntheta-1))
+    diagonal_distance = np.sqrt(horizontal_distance**2 + vertical_distance**2)
+
+    for i in range(len(bonds)):
+        assert np.isclose(bonds[i][3], diagonal_distance) or np.isclose(bonds[i][3], horizontal_distance) or np.isclose(bonds[i][3], vertical_distance), f"Bond {i} distance is incorrect: {bonds[i][3]} != {diagonal_distance} or {horizontal_distance} or {vertical_distance}"
+
     assert bonds[0][1] == 1, f"Particle 0 is not bonded with particle 1: {bonds[0][1]} != 1"
 
-    # check if all the bonds spring constant are equal to Kspring
     for i in range(half_pipe.nparticles):
         assert bonds[i][2] == Kspring, f"Particle {i} spring constant is not correct: {bonds[i][2]} != {Kspring}"
     
-    # check if the number of bonds is correct
     npairbonds = 4*half_pipe.ny*half_pipe.ntheta - 3*half_pipe.ny - 3*half_pipe.ntheta + 2
     assert len(bonds) == npairbonds, f"Number of bonds is incorrect: {len(bonds)} != {half_pipe.nparticles}"
-
-    # check if the distance for the third bond is correct
-    assert np.isclose(bonds[2][3], half_pipe.HP_length / (half_pipe.ny-1)), f"Distance for bond 2 is incorrect: {bonds[2][3]} != {half_pipe.HP_length / (half_pipe.ny-1)}"
-
-    # Search for the bonds where particle npaticles-ny appears
-    selected_bonds = [bond for bond in bonds if (bond[0] == half_pipe.nparticles - half_pipe.ny or bond[1] == half_pipe.nparticles - half_pipe.ny)]
-    assert len(selected_bonds) == 3, f"Particle {half_pipe.nparticles - half_pipe.ny} should be bonded with 3 particles, but found {len(selected_bonds)} bonds: {selected_bonds}"
-
-    selected_bonds = [bond for bond in bonds if (bond[0] == half_pipe.nparticles - 1 or bond[1] == half_pipe.nparticles - 1)]
-    assert len(selected_bonds) == 3, f"Particle {half_pipe.nparticles - 1} should be bonded with 3 particles, but found {len(selected_bonds)} bonds: {selected_bonds}"
-    # check if this particles is bonded with nparticles - 2, nparticles - half_pipe.ny - 2 and nparticles - half_pipe.ny - 1
-    assert (half_pipe.nparticles - 2) in [bond[0] for bond in selected_bonds] or (half_pipe.nparticles - 2) in [bond[1] for bond in selected_bonds], f"Particle {half_pipe.nparticles - 2} should be bonded with particle {half_pipe.nparticles - 1}, but not found in the bonds: {selected_bonds}"
-    assert (half_pipe.nparticles - half_pipe.ny - 2) in [bond[0] for bond in selected_bonds] or (half_pipe.nparticles - half_pipe.ny - 2) in [bond[1] for bond in selected_bonds], f"Particle {half_pipe.nparticles - half_pipe.ny - 2} should be bonded with particle {half_pipe.nparticles - 1}, but not found in the bonds: {selected_bonds}"
-    assert (half_pipe.nparticles - half_pipe.ny - 1) in [bond[0] for bond in selected_bonds] or (half_pipe.nparticles - half_pipe.ny - 1) in [bond[1] for bond in selected_bonds], f"Particle {half_pipe.nparticles - half_pipe.ny - 1} should be bonded with particle {half_pipe.nparticles - 1}, but not found in the bonds: {selected_bonds}"
-
-
+    
+    nhorizontalbonds = (half_pipe.ny-1)*half_pipe.ntheta
+    nverticalbonds = (half_pipe.ntheta-1)*half_pipe.ny
+    ndiagonalbonds = 2*(half_pipe.ntheta-1)*(half_pipe.ny-1)
+    horizontalbonds = [bond for bond in bonds if np.isclose(bond[3], horizontal_distance)]
+    verticalbonds = [bond for bond in bonds if np.isclose(bond[3], vertical_distance)]
+    diagonalbonds = [bond for bond in bonds if np.isclose(bond[3], diagonal_distance)]
+    assert len(horizontalbonds) == nhorizontalbonds, f"Number of horizontal bonds is incorrect: {len(horizontalbonds)} != {nhorizontalbonds}"
+    assert len(verticalbonds) == nverticalbonds, f"Number of vertical bonds is incorrect: {len(verticalbonds)} != {nverticalbonds}"
+    assert len(diagonalbonds) == ndiagonalbonds, f"Number of diagonal bonds is incorrect: {len(diagonalbonds)} != {ndiagonalbonds}"
+    
+    for i in range(half_pipe.nparticles):
+        particle_bonds = [bond for bond in bonds if bond[0] == i or bond[1] == i]
+        assert len(particle_bonds) >= 3 and len(particle_bonds) <= 8, f"Particle {i} has an incorrect number of bonds: {len(particle_bonds)} is not between 3 and 8"
+        if i == 0 or i == half_pipe.ny-1 or i == half_pipe.nparticles - half_pipe.ny or i == half_pipe.nparticles - 1:
+            assert len(particle_bonds) == 3, f"Particle {i} has an incorrect number of bonds: {len(particle_bonds)} != 3"
+        elif i % half_pipe.ny == 0 or i % half_pipe.ny == half_pipe.ny - 1 or i // half_pipe.ny == 0 or i // half_pipe.ny == half_pipe.ntheta - 1:
+            assert len(particle_bonds) == 5, f"Particle {i} has an incorrect number of bonds: {len(particle_bonds)} != 5"
+        else:
+            assert len(particle_bonds) == 8, f"Particle {i} has an incorrect number of bonds: {len(particle_bonds)} != 8"
+            for bond in particle_bonds:
+                assert (bond[0] in [i-1, i+1, i-half_pipe.ny, i+half_pipe.ny, i-half_pipe.ny-1, i+half_pipe.ny-1, i-half_pipe.ny+1, i+half_pipe.ny+1] or bond[1] in [i-1, i+1, i-half_pipe.ny, i+half_pipe.ny, i-half_pipe.ny-1, i+half_pipe.ny-1, i-half_pipe.ny+1, i+half_pipe.ny+1])
+                                
 def test_HP_angularbonds():
     """
     Test the HalfPipe class for the correct calculation of angular bonds.
     """
-    Length = 10.0  
-    Radius = 5.0 
+    Length = 12.0  
+    Radius = 6.0 
     STheta = np.pi / 2
     Kspring = 3.0
 
@@ -88,11 +99,21 @@ def test_HP_angularbonds():
     for i in range(half_pipe.nparticles):
         assert bonds[i][3] == Kspring, f"Particle {i} spring constant is not correct: {bonds[i][2]} != {Kspring}"
     
-    # check if the number of bonds is correct
     nangularbonds = 2*(half_pipe.ny*half_pipe.ntheta - half_pipe.ny - half_pipe.ntheta)
     assert len(bonds) == nangularbonds, f"Number of angular bonds is incorrect: {len(bonds)} != {nangularbonds}"
 
-    # check if the angle for the first bond is correct
+    vertical_angle = np.pi - 2 * STheta / (half_pipe.ntheta-1)
+    nhorizontal_bonds = (half_pipe.ny-2)*half_pipe.ntheta
+    nvertical_bonds = (half_pipe.ntheta-2)*(half_pipe.ny)
+
+    horizontal_bonds = [bond for bond in bonds if bond[4] == np.pi]
+    vertical_bonds = [bond for bond in bonds if np.isclose(bond[4], vertical_angle)]
+    assert len(horizontal_bonds) == nhorizontal_bonds, f"Number of horizontal bonds is incorrect: {len(horizontal_bonds)} != {nhorizontal_bonds}"
+    assert len(vertical_bonds) == nvertical_bonds, f"Number of vertical bonds is incorrect: {len(vertical_bonds)} != {nvertical_bonds}"
+
+    for bond in bonds:
+        assert np.isclose(bond[4], vertical_angle) or np.isclose(bond[4], np.pi), f"Bond {bond} angle is incorrect: {bond[4]} != {vertical_angle} or {np.pi}"
+
     assert np.isclose(bonds[0][4], np.pi), f"Angle for bond 0 is incorrect: {bonds[0][4]} != {np.pi/2}"
 
     # check if the last particle bonds are correct
@@ -103,6 +124,35 @@ def test_HP_angularbonds():
     assert (half_pipe.nparticles - 3) in [bond[0] for bond in selected_bonds] or (half_pipe.nparticles - 3) in [bond[1] for bond in selected_bonds] or (half_pipe.nparticles - 3) in [bond[2] for bond in selected_bonds], f"Particle {half_pipe.nparticles - 3} should be bonded with particle {half_pipe.nparticles - 1}, but not found in the bonds: {selected_bonds}"
     assert (half_pipe.nparticles - half_pipe.ny - 1) in [bond[0] for bond in selected_bonds] or (half_pipe.nparticles - half_pipe.ny - 1) in [bond[1] for bond in selected_bonds] or (half_pipe.nparticles - half_pipe.ny - 1) in [bond[2] for bond in selected_bonds], f"Particle {half_pipe.nparticles - half_pipe.ny - 1} should be bonded with particle {half_pipe.nparticles - 1}, but not found in the bonds: {selected_bonds}"
     assert (half_pipe.nparticles - 2 * half_pipe.ny - 1) in [bond[0] for bond in selected_bonds] or (half_pipe.nparticles - 2 * half_pipe.ny - 1) in [bond[1] for bond in selected_bonds] or (half_pipe.nparticles - 2 * half_pipe.ny - 1) in [bond[2] for bond in selected_bonds], f"Particle {half_pipe.nparticles - 2 * half_pipe.ny - 1} should be bonded with particle {half_pipe.nparticles - 1}, but not found in the bonds: {selected_bonds}"
+    two_bonded_idx = [0, half_pipe.ny-1, half_pipe.nparticles - half_pipe.ny, half_pipe.nparticles - 1]
+    three_bonded_idx = [1, half_pipe.ny - 2, half_pipe.ny, half_pipe.ny * 2 - 1,
+                        half_pipe.nparticles - 2 * half_pipe.ny, half_pipe.nparticles - half_pipe.ny - 1,
+                        half_pipe.nparticles - half_pipe.ny + 1, half_pipe.nparticles - 2]
+    four_bonded_idx = [half_pipe.ny + 1, half_pipe.ny * 2 - 2,
+                       half_pipe.nparticles - 2 * half_pipe.ny + 1, half_pipe.nparticles - half_pipe.ny - 2]
+    five_bonded_idx = [half_pipe.ny + 2, half_pipe.ny * 2 - 3,
+                       half_pipe.ny * 2 + 1, half_pipe.ny * 3 - 2,
+                       half_pipe.nparticles - 3 * half_pipe.ny + 1, half_pipe.nparticles - 2 * half_pipe.ny - 2,
+                       half_pipe.nparticles - 2 * half_pipe.ny + 2, half_pipe.nparticles - half_pipe.ny - 3],
+    
+    for i in range(half_pipe.nparticles):
+        particle_bonds = [bond for bond in bonds if bond[0] == i or bond[1] == i or bond[2] == i]
+        assert len(particle_bonds) >= 2 and len(particle_bonds) <= 6, f"Particle {i} has an incorrect number of angular bonds: {len(particle_bonds)} is not between 2 and 6"
+        if i in two_bonded_idx:
+            assert len(particle_bonds) == 2, f"Particle {i} has an incorrect number of angular bonds: {len(particle_bonds)} != 2"
+        elif i in three_bonded_idx:
+            assert len(particle_bonds) == 3, f"Particle {i} has an incorrect number of angular bonds: {len(particle_bonds)} != 3"
+        elif i in four_bonded_idx or i // half_pipe.ny == 0 or i // half_pipe.ny == half_pipe.ntheta - 1 or i % half_pipe.ny == 0 or i % half_pipe.ny == half_pipe.ny - 1:
+            assert len(particle_bonds) == 4, f"Particle {i} has an incorrect number of angular bonds: {len(particle_bonds)} != 4"
+        elif i in five_bonded_idx or i % half_pipe.ny == 1 or i % half_pipe.ny == half_pipe.ny - 2 or i // half_pipe.ny == 1 or i // half_pipe.ny == half_pipe.ntheta - 2:
+            assert len(particle_bonds) == 5, f"Particle {i} has an incorrect number of angular bonds: {len(particle_bonds)} != 5"
+        else:
+            assert len(particle_bonds) == 6, f"Particle {i} has an incorrect number of angular bonds: {len(particle_bonds)} != 6"
+            for bond in particle_bonds:
+                assert (bond[0] in [i-1, i-2, i+1, i+2, i-half_pipe.ny, i+half_pipe.ny, i-half_pipe.ny*2, i+half_pipe.ny*2] or bond[1] in [i-1, i-2, i+1, i+2, i-half_pipe.ny, i+half_pipe.ny, i-half_pipe.ny*2, i+half_pipe.ny*2] or bond[2] in [i-1, i-2, i+1, i+2, i-half_pipe.ny, i+half_pipe.ny, i-half_pipe.ny*2, i+half_pipe.ny*2])
+    
+    last_particle_bonds = [bond for bond in bonds if bond[0] == half_pipe.nparticles-1 or bond[1] == half_pipe.nparticles-1 or bond[2] == half_pipe.nparticles-1]
+    assert len(last_particle_bonds) == 2, f"Last particle has an incorrect number of angular bonds: {len(last_particle_bonds)} != 2"
 
 def test_HP_strconstr():
     """
