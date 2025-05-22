@@ -52,6 +52,55 @@ def test_membrane_positions():
     assert all(pos[0] == -LengthX/2 + (i // membrane.ny) * membrane.dx for i, pos in enumerate(positions)), f"X coordinates are incorrect, got {[pos[0] for i, pos in enumerate(positions) if pos[0] != -LengthX/2 + (i // membrane.ny) * membrane.dx]}"
 
 
+def test_membrane_pairbonds():
+    """
+    Test the generation of pair bonds.
+    """
+    LengthX = 5.0
+    LengthY = 6.0
+    Density = 2.0
+    Kspring = 2.0
+    membrane = Plain_Membrane(LengthX=LengthX, LengthY=LengthY, Density=Density, Kp = Kspring)
+
+    assert membrane.dy == LengthY/(membrane.ny - 1)
+    assert membrane.dx == LengthX/(membrane.nx - 1)
+
+
+    positions = membrane.generate_positions()
+    pairbonds = membrane.generate_pairbonds(positions)
+    num_horizontal_bonds = (membrane.nx) * (membrane.ny - 1)
+    num_diagonal_bonds = 2*(membrane.nx - 1) * (membrane.ny - 1)
+    num_vertical_bonds = (membrane.ny) * (membrane.nx - 1)
+    num_pairbonds = num_horizontal_bonds + num_vertical_bonds + num_diagonal_bonds
+
+    assert len(pairbonds) == num_pairbonds, f"Expected {num_pairbonds} pair bonds, got {len(pairbonds)}"
+
+    horizontal_bonds = [bond for bond in pairbonds if np.isclose(positions[bond[0]][0], positions[bond[1]][0], atol=1e-6)]
+    vertical_bonds = [bond for bond in pairbonds if np.isclose(positions[bond[0]][1], positions[bond[1]][1], atol=1e-6)]
+    diagonal_bonds = [bond for bond in pairbonds if not (np.isclose(positions[bond[0]][0], positions[bond[1]][0], atol=1e-6) or np.isclose(positions[bond[0]][1], positions[bond[1]][1], atol=1e-6))]
+    
+    diagonal_right_bonds = [bond for bond in diagonal_bonds if (np.isclose(positions[bond[1]][1] - positions[bond[0]][1], membrane.dy, atol=1e-6))]
+    diagonal_left_bonds = [bond for bond in diagonal_bonds if (np.isclose(positions[bond[0]][1] - positions[bond[1]][1], membrane.dy, atol=1e-6))]
+                                                   
+    assert len(horizontal_bonds) == num_horizontal_bonds, f"Expected {num_horizontal_bonds} horizontal bonds, got {len(horizontal_bonds)}"
+    assert len(vertical_bonds) == num_vertical_bonds, f"Expected {num_vertical_bonds} vertical bonds, got {len(vertical_bonds)}"
+    assert len(diagonal_bonds) == num_diagonal_bonds, f"Expected {num_diagonal_bonds} diagonal bonds, got {len(diagonal_bonds)}"
+
+    assert len(diagonal_right_bonds) == num_diagonal_bonds/2, f"Expected {num_diagonal_bonds/2} diagonal right bonds, got {len(diagonal_right_bonds)}"
+    assert len(diagonal_left_bonds) == num_diagonal_bonds/2, f"Expected {num_diagonal_bonds/2} diagonal left bonds, got {len(diagonal_left_bonds)}"
+
+    for bond in horizontal_bonds:
+        assert bond[1] - bond[0] == 1, f"Horizontal bond should be adjacent, got {bond[1] - bond[0]}"
+    for bond in vertical_bonds:
+        assert bond[1] - bond[0] == membrane.ny, f"Vertical bond should be adjacent, got {bond[1] - bond[0]}"
+    for bond in diagonal_bonds:
+        assert bond[1] - bond[0] == membrane.ny + 1 or bond[1] - bond[0] == membrane.ny - 1, f"Diagonal bond should be adjacent, got {bond[1] - bond[0]}"
+        assert np.isclose(bond[3],np.sqrt(membrane.dx**2 + membrane.dy**2), atol=1e-6), f"Diagonal bond distance should be sqrt(dx^2 + dy^2), got {bond[3]}"
+    for bond in diagonal_right_bonds:
+        assert bond[1] - bond[0] == membrane.ny + 1, f"Diagonal right bond should be adjacent, got {bond[1] - bond[0]}"
+    for bond in diagonal_left_bonds:
+        assert bond[1] - bond[0] == membrane.ny - 1, f"Diagonal left bond should be adjacent, got {bond[1] - bond[0]}"
+
 
 
 

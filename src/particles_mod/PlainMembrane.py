@@ -46,19 +46,21 @@ class Plain_Membrane:
         """
         
         # Parametrizer arrays
-        y = np.linspace(- self.LengthY/2, self.LengthY/2, self.ny)
-        x = np.linspace(- self.LengthX/2, self.LengthX/2, self.nx)
+        y = [-self.LengthY/2 + i * self.dy for i in range(self.ny)]
+        x = [-self.LengthX/2 + i * self.dx for i in range(self.nx)]
         positions = [[i, j, 0] for i in x for j in y]
         return positions
 
     def generate_pairbonds(self, positions: Iterable[float]) -> Iterable[float]:
         """
-        Generates the pair and angular bonds between the particles in the half-pipe structure.
+        Generates the pair and angular bonds between the particles in the membrane structure. 
+        This seems to be general for any open squared parametrized structure, such as a half-pipe or a strip.
+        The function generates pair bonds between adjacent particles in the x and y directions, as well as diagonal bonds.
 
         Parameters
         ----------
         positions :
-            Positions of the half-pipe particles.
+            Positions of the membrane particles.
         
         Returns
         -------
@@ -69,21 +71,21 @@ class Plain_Membrane:
         pairbonds = []
 
         # Horizontal bonds
-        for row_id in range(self.ntheta):
+        for row_id in range(self.nx):
             for column_id in range(self.ny - 1):
                 particle_id = row_id * self.ny + column_id
                 distance = np.linalg.norm(np.array(positions[particle_id]) - np.array(positions[particle_id + 1]))
                 pairbonds.append([particle_id, particle_id + 1, self.Kp, distance])
 
         # Vertical bonds
-        for row_id in range(self.ntheta - 1):
+        for row_id in range(self.nx - 1):
             for column_id in range(self.ny):
                 particle_id = row_id * self.ny + column_id
                 distance = np.linalg.norm(np.array(positions[particle_id]) - np.array(positions[particle_id + self.ny]))
                 pairbonds.append([particle_id, particle_id + self.ny, self.Kp, distance])
 
         # Diagonal bonds
-        for row_cell_id in range(self.ntheta - 1):
+        for row_cell_id in range(self.nx - 1):
             for column_cell_id in range(self.ny - 1):
                 particle_id = row_cell_id * self.ny + column_cell_id
                 distance = np.linalg.norm(np.array(positions[particle_id]) - np.array(positions[particle_id + self.ny + 1]))
