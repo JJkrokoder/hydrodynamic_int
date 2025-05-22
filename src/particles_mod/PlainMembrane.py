@@ -97,12 +97,12 @@ class Plain_Membrane:
     
     def generate_anglebonds(self, positions: list) -> list:
         """
-        Generates the angular bonds between the particles in the half-pipe structure.
+        Generates the angular bonds between the particles in the membrane structure.
 
         Parameters
         ----------
         positions :
-            Positions of the half-pipe particles.
+            Positions of the membrane particles.
         
         Returns
         -------
@@ -113,7 +113,7 @@ class Plain_Membrane:
         anglebonds = []
 
         # Horizontal angular bonds
-        for row_id in range(self.ntheta):
+        for row_id in range(self.nx):
             for column_id in range(self.ny - 2):
                 particle_id = row_id * self.ny + column_id
                 pos1 = np.array(positions[particle_id])
@@ -125,7 +125,7 @@ class Plain_Membrane:
                 anglebonds.append([particle_id, particle_id + 1, particle_id + 2, self.Ka, angle])
 
         # Vertical angular bonds
-        for row_id in range(self.ntheta - 2):
+        for row_id in range(self.nx - 2):
             for column_id in range(self.ny):
                 particle_id = row_id * self.ny + column_id
                 pos1 = np.array(positions[particle_id])
@@ -138,35 +138,35 @@ class Plain_Membrane:
 
         return anglebonds
 
-def construct_structure(length: float = 1.0, radius: float = 1.0, amplitude: float = np.pi/2, density: float = 1.0, Kp: float = 1.0, Ka: float = 1.0) -> tuple:
+def construct_structure(LengthX: float, LengthY: float, Density: float, Kp: float, Ka: float) -> tuple:
     """
-    Constructs a half-pipe structure with the given parameters.
+    Constructs the structure of the membrane and generates the positions and bonds.
 
     Parameters
     ----------
-    length :
-        Length of the half-pipe.
-    radius :
-        Radius of the half-pipe.
-    amplitude :
-        Semiangular amplitude of the half-pipe.
-    density :
-        Density of the half-pipe.
-    Kp : float, optional
-        Spring constant for the pair bonds (default is 1.0).
-    Ka : float, optional
-        Spring constant for the angular bonds (default is 1.0).
+    LengthX :
+        Length of the membrane in the X direction.
+    LengthY :
+        Length of the membrane in the Y direction.
+    Density :
+        Particle density of the membrane.
+    Kp :
+        Spring constant for the pair bonds.
+    Ka :
+        Spring constant for the angular bonds.
 
     Returns
     -------
-    tuple :
-        A tuple containing the positions and bonds of the half-pipe structure.
+    positions :
+        Positions of the membrane particles.
+    bonds :
+        Dictionary containing the pair and angular bonds.
     """
     
-    half_pipe = HalfPipe(length, radius, amplitude, density, Kp, Ka)
-    positions = half_pipe.generate_positions()
-    pairbonds = half_pipe.generate_pairbonds(positions)
-    anglebonds = half_pipe.generate_anglebonds(positions)
+    membrane = Plain_Membrane(LengthX=LengthX, LengthY=LengthY, Density=Density, Kp=Kp, Ka=Ka)
+    positions = membrane.generate_positions()
+    pairbonds = membrane.generate_pairbonds(positions)
+    anglebonds = membrane.generate_anglebonds(positions)
 
     # Create a bonds dictionary
     bonds = {

@@ -101,6 +101,39 @@ def test_membrane_pairbonds():
     for bond in diagonal_left_bonds:
         assert bond[1] - bond[0] == membrane.ny - 1, f"Diagonal left bond should be adjacent, got {bond[1] - bond[0]}"
 
+def test_membrane_anglebonds():
+    """
+    Test the generation of angular bonds.
+    """
+    LengthX = 5.0
+    LengthY = 6.0
+    Density = 2.0
+    Kangle = 2.0
+    membrane = Plain_Membrane(LengthX=LengthX, LengthY=LengthY, Density=Density, Ka = Kangle)
 
+    assert membrane.dy == LengthY/(membrane.ny - 1)
+    assert membrane.dx == LengthX/(membrane.nx - 1)
 
+    positions = membrane.generate_positions()
+    angularbonds = membrane.generate_anglebonds(positions)
+
+    num_horizontal_bonds = (membrane.nx) * (membrane.ny - 2)
+    num_vertical_bonds = (membrane.ny) * (membrane.nx - 2)
+    num_angular_bonds = num_horizontal_bonds + num_vertical_bonds
+
+    horizontal_bonds = [bond for bond in angularbonds if np.isclose(positions[bond[0]][0], positions[bond[1]][0], atol=1e-6)]
+    vertical_bonds = [bond for bond in angularbonds if np.isclose(positions[bond[0]][1], positions[bond[1]][1], atol=1e-6)]
+
+    assert len(horizontal_bonds) == num_horizontal_bonds, f"Expected {num_horizontal_bonds} horizontal bonds, got {len(horizontal_bonds)}"
+    assert len(vertical_bonds) == num_vertical_bonds, f"Expected {num_vertical_bonds} vertical bonds, got {len(vertical_bonds)}"
+    assert len(angularbonds) == num_angular_bonds, f"Expected {num_angular_bonds} angular bonds, got {len(angularbonds)}"
+
+    for bond in angularbonds:
+        assert np.isclose(bond[4], np.pi, atol=1e-6), f"Angular bond should be 180 degrees, got {bond[4]}"
+    for bond in horizontal_bonds:
+        assert bond[1] - bond[0] == 1, f"Horizontal bond should be adjacent, got {bond[1] - bond[0]}"
+        assert bond[2] - bond[1] == 1, f"Horizontal bond should be adjacent, got {bond[2] - bond[1]}"
+    for bond in vertical_bonds:
+        assert bond[1] - bond[0] == membrane.ny, f"Vertical bond should be adjacent, got {bond[1] - bond[0]}"
+        assert bond[2] - bond[1] == membrane.ny, f"Vertical bond should be adjacent, got {bond[2] - bond[1]}"
 
