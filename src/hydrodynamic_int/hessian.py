@@ -43,7 +43,7 @@ def obtain_Box(positions: Iterable[float]) -> list:
     box = [(max_coords[i] - min_coords[i])*1.5 for i in range(3)]
     return box
 
-def create_simulation(positions : Iterable[float], bonds: dict, output_file_path: str, current_dir : str = None) -> pyUAMMD.simulation:
+def create_simulation(positions : Iterable[float], bonds: dict, output_file_path: str, current_dir : str = None, method : str = "Numerical") -> pyUAMMD.simulation:
     """
     Create a pyUAMMD simulation object with the given positions and bonds. Specifies an
     output file for the Hessian matrix.
@@ -155,7 +155,7 @@ def create_simulation(positions : Iterable[float], bonds: dict, output_file_path
             "parameters": {
                 "intervalStep": 1,
                 "outputFilePath": output_file_path,
-                "mode": "Analytical",
+                "mode": method,
                 "outputPrecision": 6
             }
         }
@@ -179,7 +179,7 @@ def create_simulation(positions : Iterable[float], bonds: dict, output_file_path
     return simulation
 
 
-def obtainHessian (positions: Iterable[float] , bonds: dict, create_sp : bool = False) -> np.ndarray:
+def obtainHessian (positions: Iterable[float] , bonds: dict, create_sp : bool = False, method : str = "Numerical") -> np.ndarray:
     """
     Obtain the Hessian matrix from the positions and bonds.
     
@@ -199,9 +199,9 @@ def obtainHessian (positions: Iterable[float] , bonds: dict, create_sp : bool = 
         hessian_file_path = os.path.join(tmpdir, "hessian.txt")
         if create_sp:
             current_dir = os.getcwd()
-            simulation = create_simulation(positions, bonds, hessian_file_path, current_dir)
+            simulation = create_simulation(positions, bonds, hessian_file_path, current_dir, method = method)
         else:
-            simulation = create_simulation(positions, bonds, hessian_file_path)
+            simulation = create_simulation(positions, bonds, hessian_file_path, method = method)
         simulation.run()
         hessian = read_hessian_file(hessian_file_path)
         

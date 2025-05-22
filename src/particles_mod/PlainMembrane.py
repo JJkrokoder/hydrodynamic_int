@@ -89,9 +89,9 @@ class Plain_Membrane:
             for column_cell_id in range(self.ny - 1):
                 particle_id = row_cell_id * self.ny + column_cell_id
                 distance = np.linalg.norm(np.array(positions[particle_id]) - np.array(positions[particle_id + self.ny + 1]))
-                pairbonds.append([particle_id, particle_id + self.ny + 1, self.Kp, distance])
+                pairbonds.append([particle_id, particle_id + self.ny + 1, self.Kp*np.sqrt(2), distance])
                 distance = np.linalg.norm(np.array(positions[particle_id + 1]) - np.array(positions[particle_id + self.ny]))
-                pairbonds.append([particle_id + 1, particle_id + self.ny, self.Kp, distance])
+                pairbonds.append([particle_id + 1, particle_id + self.ny, self.Kp*np.sqrt(2), distance])
 
         return pairbonds
     
@@ -134,11 +134,12 @@ class Plain_Membrane:
                 v1 = pos1 - pos2
                 v2 = pos3 - pos2
                 angle = np.arccos(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
+                angle = np.pi
                 anglebonds.append([particle_id, particle_id + self.ny, particle_id + 2*self.ny, self.Ka, angle])
 
         return anglebonds
 
-def construct_structure(LengthX: float, LengthY: float, Density: float, Kp: float, Ka: float) -> tuple:
+def construct_structure(LengthX: float=5.0, LengthY: float=5.0, Density: float=1.0, Kp: float=1.0, Ka: float=1.0) -> tuple:
     """
     Constructs the structure of the membrane and generates the positions and bonds.
 
