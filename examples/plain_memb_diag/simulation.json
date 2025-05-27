@@ -36,7 +36,7 @@
       "parameters":{
         "intervalStep":1,
         "mode":"Analytical",
-        "outputFilePath":"/tmp/tmpo2frtwl0/hessian.txt",
+        "outputFilePath":"/home/joan/hydrodynamic_int/examples/plain_memb_diag/hessian.txt",
         "outputPrecision":12
       },
       "type":["MechanicalMeasure","HessianMeasure"]

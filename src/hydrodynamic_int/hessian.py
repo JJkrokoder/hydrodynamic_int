@@ -156,7 +156,7 @@ def create_simulation(positions : Iterable[float], bonds: dict, output_file_path
                 "intervalStep": 1,
                 "outputFilePath": output_file_path,
                 "mode": method,
-                "outputPrecision": 12
+                "outputPrecision": 15
             }
         }
     }
@@ -199,12 +199,15 @@ def obtainHessian (positions: Iterable[float] , bonds: dict, create_sp : bool = 
         hessian_file_path = os.path.join(tmpdir, "hessian.txt")
         if create_sp:
             current_dir = os.getcwd()
+            hessian_file_path = os.path.join(current_dir, "results/hessian.txt")
             simulation = create_simulation(positions, bonds, hessian_file_path, current_dir, method = method)
-            simulation.write(os.path.join(current_dir, "simulation.json"))
+            simulation.write(os.path.join(current_dir, "results/simulation.json"))
         else:
             simulation = create_simulation(positions, bonds, hessian_file_path, method = method)
         simulation.run()
         hessian = read_hessian_file(hessian_file_path)
+    
+    print(f"Hessian matrix obtained from {hessian_file_path}")
         
     return hessian
 
