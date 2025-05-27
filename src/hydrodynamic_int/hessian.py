@@ -156,7 +156,7 @@ def create_simulation(positions : Iterable[float], bonds: dict, output_file_path
                 "intervalStep": 1,
                 "outputFilePath": output_file_path,
                 "mode": method,
-                "outputPrecision": 6
+                "outputPrecision": 12
             }
         }
     }
@@ -200,6 +200,7 @@ def obtainHessian (positions: Iterable[float] , bonds: dict, create_sp : bool = 
         if create_sp:
             current_dir = os.getcwd()
             simulation = create_simulation(positions, bonds, hessian_file_path, current_dir, method = method)
+            simulation.write(os.path.join(current_dir, "simulation.json"))
         else:
             simulation = create_simulation(positions, bonds, hessian_file_path, method = method)
         simulation.run()
@@ -229,15 +230,14 @@ def diagonalize_hessian(hessian: np.ndarray) -> np.ndarray:
     """
 
     nparticles = hessian.shape[0]
-    # Transposing is done in order to change al the coordinates and indexes
+    # Transposing is done in order to change all the coordinates and indexes
     # for the second particle before changing the coordinates of the first particle
     preprocessed_hessian = hessian.transpose(0, 2, 1, 3)
     hessian_reshaped = preprocessed_hessian.reshape((nparticles * 3, nparticles * 3)) 
-    eigenvalues, eigenvectors = np.linalg.eigh(hessian_reshaped)
+    eigenvalues, eigenvectors_reshaped = np.linalg.eigh(hessian_reshaped)
     sorted_indices = np.argsort(eigenvalues)
     eigenvalues = eigenvalues[sorted_indices]
-    eigenvectors_reshaped = eigenvectors[:, sorted_indices]
-    # Reshape eigenvectors set for a mode decomposition
+    eigenvectors_reshaped = eigenvectors_reshaped[:, sorted_indices]
     eigenvectors = eigenvectors_reshaped.T.reshape((nparticles * 3, nparticles, 3))
 
     return eigenvalues, eigenvectors, hessian_reshaped, eigenvectors_reshaped

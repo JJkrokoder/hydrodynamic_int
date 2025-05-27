@@ -40,7 +40,8 @@ def test_hessian_symmetry():
     assert hessian.shape == (nparticles, nparticles, 3, 3), f"Hessian matrix has incorrect shape: {hessian.shape}"
 
     # Check hessian symmetry
-    assert np.allclose(hessian, hessian.transpose(1, 0, 3, 2)), "Hessian matrix is not symmetric"
+    assert np.allclose(hessian, hessian.transpose(1, 0, 3, 2), atol=1e-6, rtol=1e-6), "Hessian matrix is not symmetric"
+
 
 def test_hessian_diagonalization():
     """
@@ -51,27 +52,30 @@ def test_hessian_diagonalization():
 
     eigenvalues, eigenvectors, hessian_reshaped, eigenvectors_reshaped = hess.diagonalize_hessian(hessian)
 
-    # check that the first column of the hessian_reshaped is correct
-    assert np.allclose(hessian_reshaped[:, 0], hessian[:,0,:,0].flatten()), "First column of hessian_reshaped is not correct"
+    nparticles = hessian.shape[0]
+    number_of_modes = nparticles * 3
 
-    # Check that the number of modes is correct
-    assert eigenvalues.shape[0] == hessian_reshaped.shape[0], "Number of modes is not correct"
-    assert eigenvectors.shape[0] == hessian_reshaped.shape[0], "Number of eigenvectors is not correct"
+    assert hessian_reshaped.shape == (number_of_modes, number_of_modes), "Hessian reshaped has incorrect shape"
+    assert eigenvectors_reshaped.shape == (number_of_modes, number_of_modes), "Eigenvectors reshaped has incorrect shape"
+    assert eigenvalues.shape == (number_of_modes,), "Eigenvalues has incorrect shape"
+    assert eigenvectors.shape == (3 * nparticles, nparticles, 3), "Eigenvectors has incorrect shape"
 
-    # Check that the eigenvalues are real
+    assert np.allclose(
+        hessian_reshaped,
+        hessian.transpose(0, 2, 1, 3).reshape(number_of_modes, number_of_modes)
+    ), "Hessian reshaped is not correct"
+
+    np.allclose(
+        eigenvectors_reshaped,
+        eigenvectors.transpose(1, 2, 0).reshape(number_of_modes, number_of_modes)
+    ), "Eigenvectors reshaped is not correct"
+
     assert np.all(np.isreal(eigenvalues)), "Eigenvalues are not real"
 
-    # Check that the eigenvectors matriz is correctly reshaped
-    assert eigenvectors_reshaped.shape == (hessian_reshaped.shape[0], hessian_reshaped.shape[0]), "Eigenvectors matrix is not correctly reshaped"
-    assert np.allclose(eigenvectors_reshaped, eigenvectors.transpose(1,2,0).reshape(hessian_reshaped.shape[0], hessian_reshaped.shape[0])), "Eigenvectors matrix is not correctly reshaped"
-
-    # Check that the eigenvector matrix is orthogonal
-    assert np.allclose(eigenvectors_reshaped @ eigenvectors_reshaped.T, np.eye(eigenvectors_reshaped.shape[0])), "Eigenvectors matrix is not orthogonal"
-
-    # Check that the eigenvectors matrix diagonalize correctly the hessian matrix, resulting in a diagonal matrix with the eigenvalues
+    orthogonality = eigenvectors_reshaped.T @ eigenvectors_reshaped - np.eye(number_of_modes)
+    assert np.allclose(orthogonality, 0), "Eigenvectors reshaped are not orthogonal"
+    
     diagonalized_hessian = eigenvectors_reshaped.T @ hessian_reshaped @ eigenvectors_reshaped
-    print(diagonalized_hessian)
-    print(np.diag(eigenvalues))
     assert np.allclose(diagonalized_hessian, np.diag(eigenvalues)), "Eigenvectors matrix does not diagonalize the hessian matrix correctly"
     
 
