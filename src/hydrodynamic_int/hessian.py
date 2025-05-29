@@ -237,7 +237,8 @@ def diagonalize_hessian(hessian: np.ndarray) -> np.ndarray:
     # for the second particle before changing the coordinates of the first particle
     preprocessed_hessian = hessian.transpose(0, 2, 1, 3)
     hessian_reshaped = preprocessed_hessian.reshape((nparticles * 3, nparticles * 3)) 
-    eigenvalues, eigenvectors_reshaped = np.linalg.eigh(hessian_reshaped)
+    hessian_reshaped = (hessian_reshaped + hessian_reshaped.T) / 2  # Ensure symmetry
+    eigenvalues, eigenvectors_reshaped = np.linalg.eig(hessian_reshaped)
     sorted_indices = np.argsort(eigenvalues)
     eigenvalues = eigenvalues[sorted_indices]
     eigenvectors_reshaped = eigenvectors_reshaped[:, sorted_indices]

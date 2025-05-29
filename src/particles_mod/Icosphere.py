@@ -125,9 +125,11 @@ def construct_structure(radius: float = 1.0, density: float = 1.0, Kpair: float 
     vlmp_data = icosphere._generate_data()
     
     positions = vlmp_data['state']['data']
-    positions = [[pos[1]] for pos in positions]
+    positions = [pos[1] for pos in positions]
 
-    bonds = vlmp_data['topology']['forceField']['bonds']
+    bonds = vlmp_data['topology']['forceField']
+
+    print(bonds.keys())
 
     return positions, bonds
 
