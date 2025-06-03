@@ -4,6 +4,7 @@ import VLMP
 from typing import Iterable
 import tempfile
 import json
+from hydrodynamic_int.hessian import obtainHessian
 
 
 class IcoSphere:
@@ -97,6 +98,42 @@ class IcoSphere:
                 data = json.load(json_file)
 
         return data
+    
+    def calculate_hessian(self, method: str = 'Analytical'):
+        '''
+        Calculate the Hessian matrix for the icosphere structure.
+
+        Parameters
+        ----------
+        method :
+            The method to use for Hessian calculation. Options are 'Analytical' or 'Numerical'.
+        '''
+
+        positions, bonds = construct_structure(self.radius, self.density, self.Kpair, self.Kdi)
+        if method == 'Analytical':
+            hessian = obtainHessian(positions = positions, bonds = bonds, create_sp = False, method = "Analytical")
+        elif method == 'Numerical':
+            hessian = obtainHessian(positions = positions, bonds = bonds, create_sp = False, method = "Numerical")
+        else:
+            raise ValueError("Method must be 'Analytical' or 'Numerical'.")
+        
+        self.hessian = hessian
+    
+    def get_hessian(self):
+        '''
+        Get the Hessian matrix of the icosphere structure.
+
+        Returns
+        -------
+        hessian :
+            The Hessian matrix.
+        '''
+        if hasattr(self, 'hessian'):
+            return self.hessian
+        else:
+            raise ValueError("Hessian has not been calculated yet. For example, call `calculate_hessian()` first.")
+
+
 
 def construct_structure(radius: float = 1.0, density: float = 1.0, Kpair: float = 1.0, Kdi: float = 1.0) -> tuple:
     """

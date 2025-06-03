@@ -23,9 +23,9 @@ def test_icosphere():
     distances = np.linalg.norm(icosphere.positions, axis=1)
     assert np.all(np.isclose(distances, r, atol=1e-12)), "Not all particles are at the expected radius"
 
-def test_JSONgeneration():
+def test_datageneration():
     '''
-    Test the JSON generation of the IcoSphere class
+    Test the _data_generation method of the IcoSphere class.
     '''
 
     r = 2.0
@@ -54,7 +54,7 @@ def test_JSONgeneration():
 
     assert positions_array.shape == (icosphere.nparticles, 3), f"Expected positions array shape {(icosphere.nparticles, 3)}, got {positions_array.shape}"
     
-    assert np.all(np.isclose(icosphere.positions, positions_array)), "Positions in JSON data do not match IcoSphere positions"
+    assert np.all(np.isclose(icosphere.positions, positions_array)), "Positions in IcoSphere and data do not match"
                   
 
 def test_construct_structure():
@@ -75,6 +75,39 @@ def test_construct_structure():
     assert len(positions) == nparticles, f"Expected {nparticles} particles, got {len(positions)}"
     assert isinstance(bonds, dict), "Bonds should be a dictionary"
 
+def test_hessian_calculation():
+    """
+    Test the Hessian calculation for the IcoSphere.
+    """
+    radius = 2.0
+    density = 3.0
+    Kpair = 1.0
+    Kdi = 1.0
+
+    icosphere = ico.IcoSphere(radius=radius, density=density, Kpair=Kpair, Kdi=Kdi)
+
+    icosphere.calculate_hessian(method='Numerical')
+    hessian_num = icosphere.get_hessian()
+
+    icosphere.calculate_hessian()
+    hessian = icosphere.get_hessian()
+
+
+    assert hessian is not None, "Hessian should not be None after calculation"
+    assert hessian_num is not None, "Hessian (numerical) should not be None after calculation"
+    assert isinstance(hessian_num, np.ndarray), "Hessian (numerical) should be a numpy array"
+    assert isinstance(hessian, np.ndarray), "Hessian should be a numpy array"
+
+    assert hessian.shape == (icosphere.nparticles, icosphere.nparticles, 3, 3), f"Expected Hessian shape {(icosphere.nparticles, icosphere.nparticles, 3, 3)}, got {hessian.shape}"
+    assert hessian_num.shape == (icosphere.nparticles, icosphere.nparticles, 3, 3), f"Expected Hessian (numerical) shape {(icosphere.nparticles, icosphere.nparticles, 3, 3)}, got {hessian_num.shape}"
+
+    symmetry_check = np.allclose(hessian, hessian.transpose(1, 0, 3, 2))
+    symmetry_check_num = np.abs(hessian_num - hessian_num.transpose(1, 0, 3, 2))
+    symmetry_check_num = symmetry_check_num / np.mean(np.abs(hessian_num))
+    symmetry_check_num = np.allclose(symmetry_check_num, 0, atol=1e-4)
+    
+    assert symmetry_check, "Hessian should be symmetric"
+    assert symmetry_check_num, "Hessian (numerical) should be symmetric"
 
     
     
