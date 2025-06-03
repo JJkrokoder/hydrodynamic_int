@@ -98,16 +98,18 @@ def test_hessian_calculation():
     assert isinstance(hessian_num, np.ndarray), "Hessian (numerical) should be a numpy array"
     assert isinstance(hessian, np.ndarray), "Hessian should be a numpy array"
 
-    assert hessian.shape == (icosphere.nparticles, icosphere.nparticles, 3, 3), f"Expected Hessian shape {(icosphere.nparticles, icosphere.nparticles, 3, 3)}, got {hessian.shape}"
-    assert hessian_num.shape == (icosphere.nparticles, icosphere.nparticles, 3, 3), f"Expected Hessian (numerical) shape {(icosphere.nparticles, icosphere.nparticles, 3, 3)}, got {hessian_num.shape}"
+    assert hessian.shape == (icosphere.nparticles * 3, icosphere.nparticles * 3), f"Expected Hessian shape {(icosphere.nparticles * 3, icosphere.nparticles * 3)}, got {hessian.shape}"
+    assert hessian_num.shape == (icosphere.nparticles * 3, icosphere.nparticles * 3), f"Expected Hessian (numerical) shape {(icosphere.nparticles * 3, icosphere.nparticles * 3)}, got {hessian_num.shape}"
 
-    symmetry_check = np.allclose(hessian, hessian.transpose(1, 0, 3, 2))
-    symmetry_check_num = np.abs(hessian_num - hessian_num.transpose(1, 0, 3, 2))
+    symmetry_check = np.allclose(hessian, hessian.T)
+    symmetry_check_num = np.abs(hessian_num - hessian_num.T)
     symmetry_check_num = symmetry_check_num / np.mean(np.abs(hessian_num))
     symmetry_check_num = np.allclose(symmetry_check_num, 0, atol=1e-4)
-    
+
     assert symmetry_check, "Hessian should be symmetric"
     assert symmetry_check_num, "Hessian (numerical) should be symmetric"
+
+    #traslational_energy = np.sum(hessian[:3, :3]) / 2
 
     
     

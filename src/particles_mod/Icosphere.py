@@ -117,7 +117,7 @@ class IcoSphere:
         else:
             raise ValueError("Method must be 'Analytical' or 'Numerical'.")
         
-        self.hessian = hessian
+        self.hessian = hessian.transpose(0, 2, 1, 3).reshape(self.nparticles * 3, self.nparticles * 3)
     
     def get_hessian(self):
         '''
