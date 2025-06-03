@@ -4,7 +4,7 @@ import VLMP
 from typing import Iterable
 import tempfile
 import json
-from hydrodynamic_int.hessian import obtainHessian
+from hydrodynamic_int.hessian import obtainHessian, diagonalize_hessian
 
 
 class IcoSphere:
@@ -99,7 +99,7 @@ class IcoSphere:
 
         return data
     
-    def calculate_hessian(self, method: str = 'Analytical'):
+    def calculate_hessian(self, method: str = 'Analytical') -> np.ndarray:
         '''
         Calculate the Hessian matrix for the icosphere structure.
 
@@ -107,6 +107,11 @@ class IcoSphere:
         ----------
         method :
             The method to use for Hessian calculation. Options are 'Analytical' or 'Numerical'.
+
+        Returns
+        -------
+        hessian :
+            The Hessian matrix of the icosphere structure.
         '''
 
         positions, bonds = construct_structure(self.radius, self.density, self.Kpair, self.Kdi)
@@ -117,22 +122,31 @@ class IcoSphere:
         else:
             raise ValueError("Method must be 'Analytical' or 'Numerical'.")
         
-        self.hessian = hessian.transpose(0, 2, 1, 3).reshape(self.nparticles * 3, self.nparticles * 3)
-    
-    def get_hessian(self):
-        '''
-        Get the Hessian matrix of the icosphere structure.
+        return hessian.transpose(0, 2, 1, 3).reshape(self.nparticles * 3, self.nparticles * 3)
+     
+    def obtain_modes(self, method: str = 'Analytical') -> np.ndarray:
+        """
+        Obtain the modes of the icosphere structure.
+
+        Parameters
+        ----------
+        method :
+            The method to use for Hessian calculation. Options are 'Analytical' or 'Numerical'.
 
         Returns
         -------
-        hessian :
-            The Hessian matrix.
-        '''
+        eigenvalues :
+            The eigenvalues of the Hessian matrix.
+        modes :
+            The modes of the icosphere structure.
+        """
         if hasattr(self, 'hessian'):
-            return self.hessian
+            hessian = self.hessian.reshape((self.nparticles, 3, self.nparticles, 3)).transpose(0, 2, 1, 3)
+            eigenvalues, eigenvectors = diagonalize_hessian(hessian)
+            modes = eigenvectors[:, np.argsort(eigenvalues)]
+            return modes
         else:
             raise ValueError("Hessian has not been calculated yet. For example, call `calculate_hessian()` first.")
-
 
 
 def construct_structure(radius: float = 1.0, density: float = 1.0, Kpair: float = 1.0, Kdi: float = 1.0) -> tuple:

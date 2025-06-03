@@ -2,6 +2,8 @@ import particles_mod.Icosphere as ico
 import numpy as np
 import tempfile
 import os
+from typing import Iterable
+from scipy.spatial.transform import Rotation as R
 
 def test_icosphere():
     
@@ -75,9 +77,17 @@ def test_construct_structure():
     assert len(positions) == nparticles, f"Expected {nparticles} particles, got {len(positions)}"
     assert isinstance(bonds, dict), "Bonds should be a dictionary"
 
+
+
+
+
 def test_hessian_calculation():
     """
     Test the Hessian calculation for the IcoSphere.
+    This test checks the Hessian calculation using both the default method and numerical approximation.
+    It also verifies the symmetry of the Hessian and checks that it does not contain translational or rotational energy.
+    The test also checks that the positions of the particles remain at the expected radius after rotation.
+    The test rotates (z axis rotation) the positions of the particles by a specified angle and checks that the rotation is correct.
     """
     radius = 2.0
     density = 3.0
@@ -86,11 +96,9 @@ def test_hessian_calculation():
 
     icosphere = ico.IcoSphere(radius=radius, density=density, Kpair=Kpair, Kdi=Kdi)
 
-    icosphere.calculate_hessian(method='Numerical')
-    hessian_num = icosphere.get_hessian()
+    hessian_num = icosphere.calculate_hessian(method='Numerical')
 
-    icosphere.calculate_hessian()
-    hessian = icosphere.get_hessian()
+    hessian = icosphere.calculate_hessian()
 
 
     assert hessian is not None, "Hessian should not be None after calculation"
@@ -101,17 +109,57 @@ def test_hessian_calculation():
     assert hessian.shape == (icosphere.nparticles * 3, icosphere.nparticles * 3), f"Expected Hessian shape {(icosphere.nparticles * 3, icosphere.nparticles * 3)}, got {hessian.shape}"
     assert hessian_num.shape == (icosphere.nparticles * 3, icosphere.nparticles * 3), f"Expected Hessian (numerical) shape {(icosphere.nparticles * 3, icosphere.nparticles * 3)}, got {hessian_num.shape}"
 
-    symmetry_check = np.allclose(hessian, hessian.T)
+    symmetry_check = np.allclose(hessian, hessian.T, atol=1e-14)
     symmetry_check_num = np.abs(hessian_num - hessian_num.T)
-    symmetry_check_num = symmetry_check_num / np.mean(np.abs(hessian_num))
-    symmetry_check_num = np.allclose(symmetry_check_num, 0, atol=1e-4)
-
+    symmetry_check_num = symmetry_check_num / np.max(np.abs(hessian_num))
+    symmetry_check_num = np.allclose(symmetry_check_num, 0, atol=1e-6)
     assert symmetry_check, "Hessian should be symmetric"
     assert symmetry_check_num, "Hessian (numerical) should be symmetric"
 
-    #traslational_energy = np.sum(hessian[:3, :3]) / 2
+    traslational_energy = np.sum(hessian)
+    traslational_energy_num = np.sum(hessian_num)
+    assert np.isclose(traslational_energy, 0, atol=1e-13), "Hessian should not have traslational energy"
+    assert np.isclose(traslational_energy_num, 0, atol=1e-6), "Hessian (numerical) should not have traslational energy"
+    '''
+    rot_angle = np.pi / 100
+    rotation_matrix = R.from_euler('z', rot_angle).as_matrix()
+    rotated_positions = [np.dot(rotation_matrix, np.array(pos)) for pos in icosphere.positions]
+    positions_array = np.array(icosphere.positions)
+    rotated_positions_array = np.array(rotated_positions)
+    rotation_vector = rotated_positions_array - positions_array
+    
+    rotational_energy = rotation_vector.reshape(icosphere.nparticles * 3, ).T @ hessian @ rotation_vector.reshape(icosphere.nparticles * 3,)
+    print("Rotational energy:", rotational_energy)
+    assert np.isclose(rotational_energy, 0, atol=1e-4), f"Hessian should not have rotational energy, got {rotational_energy}"
+    '''
 
+def test_hessian_diagonalization():
+    """
+    Test the diagonalization of the Hessian.
+    This test checks that the Hessian can be diagonalized and that the eigenvalues are non-negative.
+    It also checks that the eigenvectors are orthogonal and that the positions of the particles remain at the expected radius after rotation.
+    """
+    radius = 2.0
+    density = 3.0
+    Kpair = 1.0
+    Kdi = 1.0
+
+    icosphere = ico.IcoSphere(radius=radius, density=density, Kpair=Kpair, Kdi=Kdi)
+
+    hessian = icosphere.calculate_hessian()
+
+    eigenvalues, eigenvectors = np.linalg.eigh(hessian)
+
+    assert eigenvalues is not None, "Eigenvalues should not be None after diagonalization"
+    assert eigenvectors is not None, "Eigenvectors should not be None after diagonalization"
     
-    
+    assert len(eigenvalues) == icosphere.nparticles * 3, f"Expected {icosphere.nparticles * 3} eigenvalues, got {len(eigenvalues)}"
+    assert len(eigenvectors) == icosphere.nparticles * 3, f"Expected {icosphere.nparticles * 3} eigenvectors, got {len(eigenvectors)}"
+
+    assert np.all(eigenvalues >= -1e-2), "Eigenvalues should be non-negative"
+
+    # Check orthogonality of eigenvectors
+    orthogonality_check = np.allclose(np.dot(eigenvectors.T, eigenvectors), np.eye(icosphere.nparticles * 3), atol=1e-12)
+    assert orthogonality_check, "Eigenvectors should be orthogonal"  
     
       

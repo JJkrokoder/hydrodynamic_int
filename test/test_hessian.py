@@ -49,33 +49,25 @@ def test_hessian_diagonalization():
     """
     hessian = np.array([[[[1, 0, 0], [0, 1, 0], [0, 0, 1]], [[0, 0, 0], [0, 1, 0], [0, 0, 1]]],
                         [[[0, 0, 0], [0, 1, 0], [0, 0, 1]], [[1, 0, 0], [0, 1, 0], [0, 0, 1]]]])
-
-    eigenvalues, eigenvectors, hessian_reshaped, eigenvectors_reshaped = hess.diagonalize_hessian(hessian)
-
+    
     nparticles = hessian.shape[0]
     number_of_modes = nparticles * 3
+    
+    hessian = hessian.transpose(0, 2, 1, 3).reshape(6, 6)
 
-    assert hessian_reshaped.shape == (number_of_modes, number_of_modes), "Hessian reshaped has incorrect shape"
-    assert eigenvectors_reshaped.shape == (number_of_modes, number_of_modes), "Eigenvectors reshaped has incorrect shape"
+    eigenvalues, eigenvectors = hess.diagonalize_hessian(hessian)
+
+    assert hessian.shape == (number_of_modes, number_of_modes), "Hessian reshaped has incorrect shape"
+    assert eigenvectors.shape == (number_of_modes, number_of_modes), "Eigenvectors reshaped has incorrect shape"
     assert eigenvalues.shape == (number_of_modes,), "Eigenvalues has incorrect shape"
-    assert eigenvectors.shape == (3 * nparticles, nparticles, 3), "Eigenvectors has incorrect shape"
-
-    assert np.allclose(
-        hessian_reshaped,
-        hessian.transpose(0, 2, 1, 3).reshape(number_of_modes, number_of_modes)
-    ), "Hessian reshaped is not correct"
-
-    np.allclose(
-        eigenvectors_reshaped,
-        eigenvectors.transpose(1, 2, 0).reshape(number_of_modes, number_of_modes)
-    ), "Eigenvectors reshaped is not correct"
-
+   
+    
     assert np.all(np.isreal(eigenvalues)), "Eigenvalues are not real"
 
-    orthogonality = eigenvectors_reshaped.T @ eigenvectors_reshaped - np.eye(number_of_modes)
+    orthogonality = eigenvectors.T @ eigenvectors - np.eye(number_of_modes)
     assert np.allclose(orthogonality, 0), "Eigenvectors reshaped are not orthogonal"
     
-    diagonalized_hessian = eigenvectors_reshaped.T @ hessian_reshaped @ eigenvectors_reshaped
+    diagonalized_hessian = eigenvectors.T @ hessian @ eigenvectors
     assert np.allclose(diagonalized_hessian, np.diag(eigenvalues)), "Eigenvectors matrix does not diagonalize the hessian matrix correctly"
     
 

@@ -218,33 +218,24 @@ def diagonalize_hessian(hessian: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     hessian :
-        The Hessian matrix in (nparticles, nparticles, 3, 3) format.
+        The Hessian matrix in (nparticles * 3, nparticles * 3) format.
     
     Returns
     -------
     eigenvalues :
         The eigenvalues of the Hessian matrix.
     eigenvectors :
-        The eigenvectors of the Hessian matrix in (nparticles * 3, nparticles, 3) format.
-    hessian_reshaped :
-        The Hessian matrix reshaped to (nparticles * 3, nparticles * 3) format.
-    eigenvectors_reshaped :
-        The eigenvectors reshaped to (nparticles * 3, nparticles * 3) format.
+        The eigenvectors of the Hessian matrix in (nparticles * 3, nparticles * 3) format.
     """
 
-    nparticles = hessian.shape[0]
-    # Transposing is done in order to change all the coordinates and indexes
-    # for the second particle before changing the coordinates of the first particle
-    preprocessed_hessian = hessian.transpose(0, 2, 1, 3)
-    hessian_reshaped = preprocessed_hessian.reshape((nparticles * 3, nparticles * 3)) 
-    hessian_reshaped = (hessian_reshaped + hessian_reshaped.T) / 2  # Ensure symmetry
-    eigenvalues, eigenvectors_reshaped = np.linalg.eigh(hessian_reshaped)
+    
+    hessian = (hessian + hessian.T) / 2  # Ensure symmetry
+    eigenvalues, eigenvectors = np.linalg.eigh(hessian)
     sorted_indices = np.argsort(eigenvalues)
     eigenvalues = eigenvalues[sorted_indices]
-    eigenvectors_reshaped = eigenvectors_reshaped[:, sorted_indices]
-    eigenvectors = eigenvectors_reshaped.T.reshape((nparticles * 3, nparticles, 3))
+    eigenvectors = eigenvectors[:, sorted_indices]
 
-    return eigenvalues, eigenvectors, hessian_reshaped, eigenvectors_reshaped
+    return eigenvalues, eigenvectors
 
 
 
