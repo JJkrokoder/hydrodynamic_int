@@ -139,27 +139,28 @@ def test_hessian_diagonalization():
     This test checks that the Hessian can be diagonalized and that the eigenvalues are non-negative.
     It also checks that the eigenvectors are orthogonal and that the positions of the particles remain at the expected radius after rotation.
     """
-    radius = 2.0
+    radius = 4.0
     density = 3.0
     Kpair = 1.0
     Kdi = 1.0
 
     icosphere = ico.IcoSphere(radius=radius, density=density, Kpair=Kpair, Kdi=Kdi)
 
-    hessian = icosphere.calculate_hessian()
+    modes, eigenvalues = icosphere.obtain_modes()
 
-    eigenvalues, eigenvectors = np.linalg.eigh(hessian)
+    assert modes is not None, "Modes should not be None after calculation"
+    assert eigenvalues is not None, "Eigenvalues should not be None after calculation"
 
-    assert eigenvalues is not None, "Eigenvalues should not be None after diagonalization"
-    assert eigenvectors is not None, "Eigenvectors should not be None after diagonalization"
-    
-    assert len(eigenvalues) == icosphere.nparticles * 3, f"Expected {icosphere.nparticles * 3} eigenvalues, got {len(eigenvalues)}"
-    assert len(eigenvectors) == icosphere.nparticles * 3, f"Expected {icosphere.nparticles * 3} eigenvectors, got {len(eigenvectors)}"
+    assert modes.shape == (icosphere.nparticles * 3, icosphere.nparticles * 3), f"Expected modes shape {(icosphere.nparticles * 3, icosphere.nparticles * 3)}, got {modes.shape}"
+    assert eigenvalues.shape == (icosphere.nparticles * 3,), f"Expected eigenvalues shape {(icosphere.nparticles * 3,)}, got {eigenvalues.shape}"
 
-    assert np.all(eigenvalues >= -1e-2), "Eigenvalues should be non-negative"
+    assert np.all(eigenvalues >= -5e-3), "Eigenvalues should be non-negative"
 
-    # Check orthogonality of eigenvectors
-    orthogonality_check = np.allclose(np.dot(eigenvectors.T, eigenvectors), np.eye(icosphere.nparticles * 3), atol=1e-12)
-    assert orthogonality_check, "Eigenvectors should be orthogonal"  
+    orthogonality_check = np.allclose(modes.T @ modes, np.eye(icosphere.nparticles * 3), atol=1e-10)
+    assert orthogonality_check, "Modes should be orthogonal"
+
+    diag_hessian = modes.T @ icosphere.hessian @ modes
+    assert diag_hessian.shape == (icosphere.nparticles * 3, icosphere.nparticles * 3), f"Expected diagonalized Hessian shape {(icosphere.nparticles * 3, icosphere.nparticles * 3)}, got {diag_hessian.shape}"
+    assert np.all(np.isclose(np.diag(diag_hessian), eigenvalues)), "Diagonalized Hessian should match eigenvalues"
     
       

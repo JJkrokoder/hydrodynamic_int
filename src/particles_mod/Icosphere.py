@@ -38,6 +38,30 @@ class IcoSphere:
     
 
     
+    def get_positions(self) -> np.ndarray:
+        """
+        Get the positions of the particles in the icosphere.
+
+        Returns
+        -------
+        positions :
+            The positions of the particles in the icosphere.
+        """
+        return self.positions
+    
+    def set_positions(self, positions: Iterable[float]) -> None:
+        """
+        Set the positions of the particles in the icosphere.
+
+        Parameters
+        ----------
+        positions :
+            The new positions of the particles in the icosphere.
+        """
+        if len(positions) != self.nparticles:
+            raise ValueError(f"Expected {self.nparticles} positions, got {len(positions)}")
+        self.positions = positions
+
     def _generate_data(self) :
         """
         Generate a UAMMD-structured data object for the icosphere.
@@ -141,12 +165,16 @@ class IcoSphere:
             The modes of the icosphere structure.
         """
         if hasattr(self, 'hessian'):
-            hessian = self.hessian.reshape((self.nparticles, 3, self.nparticles, 3)).transpose(0, 2, 1, 3)
-            eigenvalues, eigenvectors = diagonalize_hessian(hessian)
-            modes = eigenvectors[:, np.argsort(eigenvalues)]
-            return modes
+            if self.hessian.shape != (self.nparticles * 3, self.nparticles * 3):
+                hessian = self.hessian.transpose(0, 2, 1, 3).reshape(self.nparticles * 3, self.nparticles * 3)
         else:
-            raise ValueError("Hessian has not been calculated yet. For example, call `calculate_hessian()` first.")
+            hessian = self.calculate_hessian(method=method)
+            self.hessian = hessian
+        eigenvalues, eigenvectors = diagonalize_hessian(hessian)
+        eigenvalues = np.sort(eigenvalues)
+        modes = eigenvectors[:, np.argsort(eigenvalues)]
+        return modes, eigenvalues
+
 
 
 def construct_structure(radius: float = 1.0, density: float = 1.0, Kpair: float = 1.0, Kdi: float = 1.0) -> tuple:
