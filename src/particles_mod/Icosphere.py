@@ -138,7 +138,7 @@ class IcoSphere:
             The Hessian matrix of the icosphere structure.
         '''
 
-        positions, bonds = construct_structure(self.radius, self.density, self.Kpair, self.Kdi)
+        positions, bonds = self.construct_structure()
         if method == 'Analytical':
             hessian = obtainHessian(positions = positions, bonds = bonds, create_sp = False, method = "Analytical")
         elif method == 'Numerical':
@@ -175,42 +175,26 @@ class IcoSphere:
         modes = eigenvectors[:, np.argsort(eigenvalues)]
         return modes, eigenvalues
 
+    def construct_structure(self) -> tuple:
+        """
+        Constructs the structure of the icosphere and generates the positions and bonds.
 
+        Returns
+        -------
+        positions :
+            Positions of the icosphere particles.
+        bonds :
+            Dictionary containing the pair bonds.
+        """
+        
+        vlmp_data = self._generate_data()
+        
+        positions = vlmp_data['state']['data']
+        positions = [pos[1] for pos in positions]
 
-def construct_structure(radius: float = 1.0, density: float = 1.0, Kpair: float = 1.0, Kdi: float = 1.0) -> tuple:
-    """
-    Constructs the structure of the icosphere and generates the positions and bonds.
+        bonds = vlmp_data['topology']['forceField']
 
-    Parameters
-    ----------
-    radius :
-        The radius of the icosphere.
-    density :
-        The surface density of particles in the icosphere.
-    Kpair :
-        Spring constant for the pair bonds.
-    Kdi :
-        Spring constant for the dihedral bonds.
-
-    Returns
-    -------
-    positions :
-        Positions of the icosphere particles.
-    bonds :
-        Dictionary containing the pair bonds.
-    """
-    
-    icosphere = IcoSphere(radius=radius, density=density, Kpair=Kpair, Kdi=Kdi)
-    vlmp_data = icosphere._generate_data()
-    
-    positions = vlmp_data['state']['data']
-    positions = [pos[1] for pos in positions]
-
-    bonds = vlmp_data['topology']['forceField']
-
-    print(bonds.keys())
-
-    return positions, bonds
+        return positions, bonds
 
 
 

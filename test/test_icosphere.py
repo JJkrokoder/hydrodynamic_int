@@ -72,7 +72,9 @@ def test_construct_structure():
     freq_division = round(np.sqrt(1 + (nparticles - 12)/10))
     nparticles = 12 + 10 *(freq_division**2 - 1)
 
-    positions, bonds = ico.construct_structure(radius = radius, density = density, Kpair=Kpair, Kdi=Kdi)
+    icosphere = ico.IcoSphere(radius=radius, density=density, Kpair=Kpair, Kdi=Kdi)
+
+    positions, bonds = icosphere.construct_structure()
 
     assert len(positions) == nparticles, f"Expected {nparticles} particles, got {len(positions)}"
     assert isinstance(bonds, dict), "Bonds should be a dictionary"
@@ -85,9 +87,9 @@ def test_hessian_calculation():
     """
     Test the Hessian calculation for the IcoSphere.
     This test checks the Hessian calculation using both the default method and numerical approximation.
-    It also verifies the symmetry of the Hessian and checks that it does not contain translational or rotational energy.
-    The test also checks that the positions of the particles remain at the expected radius after rotation.
-    The test rotates (z axis rotation) the positions of the particles by a specified angle and checks that the rotation is correct.
+    It also verifies the symmetry of the Hessian and checks that it does not contain translational energy.
+    It also checks the modes and eigenvalues obtained from the Hessian.
+    
     """
     radius = 2.0
     density = 3.0
@@ -120,31 +122,6 @@ def test_hessian_calculation():
     traslational_energy_num = np.sum(hessian_num)
     assert np.isclose(traslational_energy, 0, atol=1e-13), "Hessian should not have traslational energy"
     assert np.isclose(traslational_energy_num, 0, atol=1e-6), "Hessian (numerical) should not have traslational energy"
-    '''
-    rot_angle = np.pi / 100
-    rotation_matrix = R.from_euler('z', rot_angle).as_matrix()
-    rotated_positions = [np.dot(rotation_matrix, np.array(pos)) for pos in icosphere.positions]
-    positions_array = np.array(icosphere.positions)
-    rotated_positions_array = np.array(rotated_positions)
-    rotation_vector = rotated_positions_array - positions_array
-    
-    rotational_energy = rotation_vector.reshape(icosphere.nparticles * 3, ).T @ hessian @ rotation_vector.reshape(icosphere.nparticles * 3,)
-    print("Rotational energy:", rotational_energy)
-    assert np.isclose(rotational_energy, 0, atol=1e-4), f"Hessian should not have rotational energy, got {rotational_energy}"
-    '''
-
-def test_hessian_diagonalization():
-    """
-    Test the diagonalization of the Hessian.
-    This test checks that the Hessian can be diagonalized and that the eigenvalues are non-negative.
-    It also checks that the eigenvectors are orthogonal and that the positions of the particles remain at the expected radius after rotation.
-    """
-    radius = 4.0
-    density = 3.0
-    Kpair = 1.0
-    Kdi = 1.0
-
-    icosphere = ico.IcoSphere(radius=radius, density=density, Kpair=Kpair, Kdi=Kdi)
 
     modes, eigenvalues = icosphere.obtain_modes()
 
