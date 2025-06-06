@@ -208,28 +208,55 @@ class IcoSphere:
         simulation = preliminary_structured_simulation(positions=self.positions, bonds=self.bonds)
 
         relaxation_steps = 0
+
+        if equilibrium:
+            relaxation_steps = self.nparticles * 5
         
         with tempfile.TemporaryDirectory() as output_dir:
         
-            if equilibrium:
-                relaxation_steps = 1000
-                simulation['integrator']['schedule']['data'][0][2] = relaxation_steps + 1
-            
-            simulation['simulationStep'] = {
-            # Output the Hessian matrix
-            "hessianmeasure": {
-                "type": ["MechanicalMeasure", "HessianMeasure"],
-                "parameters": {
-                    "intervalStep": relaxation_steps,
-                    "outputFilePath": f"{output_dir}/hessian.txt",
-                    "mode": method,
-                    "outputPrecision": 15,
-                    "startStep": 1
+            simulation['simulationStep']= {
+                "hessianmeasure": {
+                    "type": ["MechanicalMeasure", "HessianMeasure"],
+                    "parameters": {
+                        "intervalStep": relaxation_steps,
+                        "outputFilePath": f"{output_dir}/hessian.txt",
+                        "mode": method,
+                        "outputPrecision": 15,
+                        "startStep": 1
+                    }
                 }
-            },
             }
+            
+            if equilibrium:
+                simulation['integrator']['schedule']['data'][0][2] = relaxation_steps + 1
+                
+                simulation['simulationStep']['positionsmeasure'] = {
+                    "type": ["WriteStep", "WriteStep"],
+                    "parameters": {
+                        "intervalStep": relaxation_steps,
+                        "startStep": 1,
+                        "outputFilePath": f"{output_dir}/positions",
+                        "outputFormat": "sp",
+                        "pbc": True
+                    }
+                }
+
+                simulation['simulationStep']['forcemeasure'] = {
+                    "type": ["MechanicalMeasure", "PairwiseForceMeasure"],
+                    "parameters": {
+                        "intervalStep": relaxation_steps,
+                        "startStep": 1,
+                        "outputFilePath": f"{output_dir}/forces.txt",
+                        "mode": "Total_force",
+                    }
+                }
+            
+            
+            
             simulation.run()
             hessian = read_hessian_file(f"{output_dir}/hessian.txt")
+            self.positions = np.loadtxt(f"{output_dir}/positions.sp", skiprows=1, usecols=(0, 1, 2))
+            self.forces = np.loadtxt(f"{output_dir}/forces.txt", skiprows=1, usecols=(1, 2, 3))
         
         
         return hessian.transpose(0, 2, 1, 3).reshape(self.nparticles * 3, self.nparticles * 3)
@@ -245,10 +272,11 @@ class IcoSphere:
 
         Returns
         -------
-        eigenvalues :
-            The eigenvalues of the Hessian matrix.
         modes :
             The modes of the icosphere structure.
+        eigenvalues :
+            The eigenvalues of the Hessian matrix.
+        
         """
         if hasattr(self, 'hessian'):
             if self.hessian.shape != (self.nparticles * 3, self.nparticles * 3):
