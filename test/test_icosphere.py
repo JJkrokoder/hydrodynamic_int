@@ -112,7 +112,7 @@ def test_modes_and_eigenvalues():
     This test checks that the modes and eigenvalues are calculated correctly,
     that the modes are orthogonal, and that the diagonalized Hessian matches the eigenvalues.
     """
-    radius = 5.0
+    radius = 3.0
     density = 2.0
     Kpair = 1.0
     Kdi = 1.0
