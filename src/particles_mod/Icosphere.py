@@ -4,7 +4,62 @@ import VLMP
 from typing import Iterable
 import tempfile
 import json
-from hydrodynamic_int.hessian import obtainHessian, diagonalize_hessian
+from hydrodynamic_int.hessian import obtainHessian, diagonalize_hessian, read_hessian_file
+import pyUAMMD
+
+def preliminary_structured_simulation(positions: Iterable[float], bonds: dict):
+    """
+    Create a preliminary UAMMD-structured simulation dictionary for the icosphere.
+
+    Parameters
+    ----------
+    positions :
+        The positions of the particles in the icosphere.
+    bonds : dict
+        A UAMMD-structured dictionary representing the bonds between particles.
+
+    Returns
+    -------
+    simulation :
+        A dictionary containing the simulation sections.
+    """
+
+    simulation = pyUAMMD.simulation()
+
+    simulation["system"] = {
+        "info": {"type": ["Simulation", "Information"], "parameters": {"name": "Icosphere"}}
+    }
+    
+    simulation["global"] = {
+        "units": {"type": ["Units", "None"]},
+        "types": {"type": ["Types", "Basic"], "labels": ["name", "mass", "radius", "charge"], 
+                  "data": [["A", 1.0, 0.5, 0.0]]},
+        "ensemble": {"type": ["Ensemble", "NVT"], "labels": ["box", "temperature"], 
+                     "data": [[[100, 100, 100], 0.0]]}
+    }
+
+    simulation["state"] = {
+        "labels": ["id", "position"], 
+        "data": [[i, pos] for i, pos in enumerate(positions.tolist())]
+    }
+    
+    simulation["integrator"] = {
+        "bbk": {"type": ["Langevin", "BBK"], 
+                "parameters": {"timeStep": 0.05, "frictionConstant": 1.0}},
+        "schedule": {"type": ["Schedule", "Integrator"], 
+                     "labels": ["order", "integrator", "steps"], 
+                     "data": [[1, "bbk", 1]]}
+    }
+    
+    simulation["topology"] = {
+        "structure": {"labels": ["id", "type"], 
+                      "data": [[i, "A"] for i in range(len(positions))]},
+        "forceField": bonds
+    }
+
+    print("Preliminary simulation structure created")
+
+    return simulation
 
 
 class IcoSphere:
@@ -35,9 +90,18 @@ class IcoSphere:
         self.positions = normalized_positions * radius
         self.nparticles = len(self.positions)
         self.density = nparticles / (4 * np.pi * radius**2)
-    
 
-    
+        vlmp_data = self._generate_data()
+        
+        positions = vlmp_data['state']['data']
+        positions = [pos[1] for pos in positions]
+
+        bonds = vlmp_data['topology']['forceField']
+
+        self.positions = np.array(positions)
+        self.bonds = bonds 
+
+  
     def get_positions(self) -> np.ndarray:
         """
         Get the positions of the particles in the icosphere.
@@ -49,7 +113,7 @@ class IcoSphere:
         """
         return self.positions
     
-    def set_positions(self, positions: Iterable[float]) -> None:
+    def set_positions(self, positions: Iterable[float]):
         """
         Set the positions of the particles in the icosphere.
 
@@ -100,7 +164,7 @@ class IcoSphere:
                 }},
             ],
             "simulationSteps": [
-                {"type": "saveState", "parameters": {"intervalStep": 0,
+                {"type": "saveState", "parameters": {"intervalStep": 1,
                                                     "outputFilePath": temp_file,
                                                     "outputFormat": "xyz"}},
             ]
@@ -122,10 +186,13 @@ class IcoSphere:
                 data = json.load(json_file)
 
         return data
+
     
-    def calculate_hessian(self, method: str = 'Analytical') -> np.ndarray:
+    
+    def calculate_hessian(self, method: str = 'Analytical', equilibrium : bool = True) -> np.ndarray:
         '''
-        Calculate the Hessian matrix for the icosphere structure.
+        Calculate the Hessian matrix for the icosphere structure. If the system relaxation
+        is ensured before calculating the Hessian, must be updated.
 
         Parameters
         ----------
@@ -138,13 +205,32 @@ class IcoSphere:
             The Hessian matrix of the icosphere structure.
         '''
 
-        positions, bonds = self.construct_structure()
-        if method == 'Analytical':
-            hessian = obtainHessian(positions = positions, bonds = bonds, create_sp = False, method = "Analytical")
-        elif method == 'Numerical':
-            hessian = obtainHessian(positions = positions, bonds = bonds, create_sp = False, method = "Numerical")
-        else:
-            raise ValueError("Method must be 'Analytical' or 'Numerical'.")
+        simulation = preliminary_structured_simulation(positions=self.positions, bonds=self.bonds)
+
+        relaxation_steps = 0
+        
+        with tempfile.TemporaryDirectory() as output_dir:
+        
+            if equilibrium:
+                relaxation_steps = 1000
+                simulation['integrator']['schedule']['data'][0][2] = relaxation_steps + 1
+            
+            simulation['simulationStep'] = {
+            # Output the Hessian matrix
+            "hessianmeasure": {
+                "type": ["MechanicalMeasure", "HessianMeasure"],
+                "parameters": {
+                    "intervalStep": relaxation_steps,
+                    "outputFilePath": f"{output_dir}/hessian.txt",
+                    "mode": method,
+                    "outputPrecision": 15,
+                    "startStep": 1
+                }
+            },
+            }
+            simulation.run()
+            hessian = read_hessian_file(f"{output_dir}/hessian.txt")
+        
         
         return hessian.transpose(0, 2, 1, 3).reshape(self.nparticles * 3, self.nparticles * 3)
      
@@ -175,26 +261,7 @@ class IcoSphere:
         modes = eigenvectors[:, np.argsort(eigenvalues)]
         return modes, eigenvalues
 
-    def construct_structure(self) -> tuple:
-        """
-        Constructs the structure of the icosphere and generates the positions and bonds.
-
-        Returns
-        -------
-        positions :
-            Positions of the icosphere particles.
-        bonds :
-            Dictionary containing the pair bonds.
-        """
-        
-        vlmp_data = self._generate_data()
-        
-        positions = vlmp_data['state']['data']
-        positions = [pos[1] for pos in positions]
-
-        bonds = vlmp_data['topology']['forceField']
-
-        return positions, bonds
+    
 
 
 

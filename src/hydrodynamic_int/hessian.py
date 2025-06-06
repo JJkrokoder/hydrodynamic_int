@@ -7,6 +7,7 @@ from typing import Iterable
 def read_hessian_file(file_path):
     
     hessian_f = np.loadtxt(file_path)
+    print(f"Read Hessian file {file_path} with shape {hessian_f.shape}")
     # Hessian file has shape (npairs, 11), first two columns are the pair indices
     assert (
         hessian_f.shape[1] == 11
@@ -23,27 +24,8 @@ def read_hessian_file(file_path):
     hessian[i, j] = matrices
     return hessian
 
-def obtain_Box(positions: Iterable[float]) -> list:
-    """
-    Obtain the simulation box from the positions of the particles.
-    
-    Parameters
-    ----------
-    positions :
-        Positions of atoms.
-    
-    Returns
-    -------
-    box :
-        The simulation box dimensions.
-    """
 
-    max_coords = np.max(positions[:][1], axis=0)
-    min_coords = np.min(positions[:][1], axis=0)
-    box = [(max_coords[i] - min_coords[i])*1.5 for i in range(3)]
-    return box
-
-def create_simulation(positions : Iterable[float], bonds: dict, output_file_path: str, current_dir : str = None, method : str = "Numerical") -> pyUAMMD.simulation:
+def create_simulation(positions : Iterable[float], bonds: dict, output_dir: str, method : str = "Numerical") -> pyUAMMD.simulation:
     """
     Create a pyUAMMD simulation object with the given positions and bonds. Specifies an
     output file for the Hessian matrix.
@@ -78,6 +60,8 @@ def create_simulation(positions : Iterable[float], bonds: dict, output_file_path
     All particles are assumed to be of type "A" with a mass of 1.0, radius of 0.5,
     and charge of 0.0.
     """
+
+    relaxation_steps = 1000
 
     # Create a pyUAMMD simulation object
     simulation = pyUAMMD.simulation()
@@ -115,7 +99,7 @@ def create_simulation(positions : Iterable[float], bonds: dict, output_file_path
         "bbk": {
             "type": ["Langevin", "BBK"],
             "parameters": {
-                "timeStep": 0.000,
+                "timeStep": 0.05,
                 "frictionConstant": 1.0
             }
         },
@@ -123,7 +107,7 @@ def create_simulation(positions : Iterable[float], bonds: dict, output_file_path
         "schedule": {
             "type": ["Schedule", "Integrator"],
             "labels": ["order", "integrator", "steps"],
-            "data": [[1, "bbk", 1]]
+            "data": [[1, "bbk", relaxation_steps + 1]]
         }
     }
 
@@ -144,38 +128,40 @@ def create_simulation(positions : Iterable[float], bonds: dict, output_file_path
     simulation["topology"]["forceField"] = bonds
     # Configure Simulation Steps
     simulation["simulationStep"] = {
-        # Output simulation information periodically
-        "info": {
-            "type": ["UtilsStep", "InfoStep"],
-            "parameters": {"intervalStep": 1}
-        },
         # Output the Hessian matrix
-        "hessianMeasure": {
+        "hessianmeasure": {
             "type": ["MechanicalMeasure", "HessianMeasure"],
             "parameters": {
-                "intervalStep": 1,
-                "outputFilePath": output_file_path,
+                "intervalStep": relaxation_steps,
+                "outputFilePath": f"{output_dir}/hessian.txt",
                 "mode": method,
-                "outputPrecision": 15
+                "outputPrecision": 15,
+                "startStep": 1
             }
         }
     }
 
-    if current_dir is not None:
-        
-        results_dir = os.path.join(current_dir, "results")
-        if not os.path.exists(results_dir):
-            os.makedirs(results_dir)
-
-        simulation["simulationStep"]["output"] = {
-            "type": ["WriteStep", "WriteStep"],
-            "parameters": {
-                "intervalStep": 1,
-                "outputFilePath": os.path.join(results_dir, "output.txt"),
-                "outputFormat": "sp",
-                "pbc": True
-            }
+    simulation["simulationStep"]["positions"] = {
+        "type": ["WriteStep", "WriteStep"],
+        "parameters": {
+            "intervalStep": relaxation_steps,
+            "startStep": 1,
+            "outputFilePath": f"{output_dir}/positions",
+            "outputFormat": "sp",
+            "pbc": True
         }
+    }
+
+    simulation["simulationStep"]["ForceMeasure"] = {
+        "type": ["MechanicalMeasure", "PairwiseForceMeasure"],
+        "parameters": {
+            "intervalStep": relaxation_steps,
+            "startStep": 1,
+            "outputFilePath": f"{output_dir}/forces.txt",
+            "mode": "Total_force",
+        }
+    }
+
     return simulation
 
 
@@ -195,19 +181,14 @@ def obtainHessian (positions: Iterable[float] , bonds: dict, create_sp : bool = 
     hessian : 
         The Hessian matrix.
     """
-    with tempfile.TemporaryDirectory() as tmpdir:
-        hessian_file_path = os.path.join(tmpdir, "hessian.txt")
+    with tempfile.TemporaryDirectory() as tmpdir: 
         if create_sp:
             current_dir = os.getcwd()
-            hessian_file_path = os.path.join(current_dir, "results/hessian.txt")
-            simulation = create_simulation(positions, bonds, hessian_file_path, current_dir, method = method)
-            simulation.write(os.path.join(current_dir, "results/simulation.json"))
+            simulation = create_simulation(positions, bonds, current_dir, method = method)
         else:
-            simulation = create_simulation(positions, bonds, hessian_file_path, method = method)
+            simulation = create_simulation(positions, bonds, tmpdir, method = method)
         simulation.run()
-        hessian = read_hessian_file(hessian_file_path)
-    
-    print(f"Hessian matrix obtained from {hessian_file_path}")
+        hessian = read_hessian_file(f"{tmpdir}/hessian.txt")
         
     return hessian
 

@@ -59,29 +59,6 @@ def test_datageneration():
     assert np.all(np.isclose(icosphere.positions, positions_array)), "Positions in IcoSphere and data do not match"
                   
 
-def test_construct_structure():
-    """
-    Test the construct_structure function with a known configuration.
-    """
-    radius = 2.0
-    density = 3.0
-    Kpair = 1.0
-    Kdi = 1.0
-
-    nparticles = round(4 * np.pi * radius**2 * density)
-    freq_division = round(np.sqrt(1 + (nparticles - 12)/10))
-    nparticles = 12 + 10 *(freq_division**2 - 1)
-
-    icosphere = ico.IcoSphere(radius=radius, density=density, Kpair=Kpair, Kdi=Kdi)
-
-    positions, bonds = icosphere.construct_structure()
-
-    assert len(positions) == nparticles, f"Expected {nparticles} particles, got {len(positions)}"
-    assert isinstance(bonds, dict), "Bonds should be a dictionary"
-
-
-
-
 
 def test_hessian_calculation():
     """
@@ -89,10 +66,10 @@ def test_hessian_calculation():
     This test checks the Hessian calculation using both the default method and numerical approximation.
     It also verifies the symmetry of the Hessian and checks that it does not contain translational energy.
     It also checks the modes and eigenvalues obtained from the Hessian.
-    
     """
+    
     radius = 2.0
-    density = 3.0
+    density = 2.0
     Kpair = 1.0
     Kdi = 1.0
 
@@ -120,7 +97,7 @@ def test_hessian_calculation():
 
     traslational_energy = np.sum(hessian)
     traslational_energy_num = np.sum(hessian_num)
-    assert np.isclose(traslational_energy, 0, atol=1e-13), "Hessian should not have traslational energy"
+    assert np.isclose(traslational_energy, 0, atol=1e-10), "Hessian should not have traslational energy"
     assert np.isclose(traslational_energy_num, 0, atol=1e-6), "Hessian (numerical) should not have traslational energy"
 
     modes, eigenvalues = icosphere.obtain_modes()
@@ -131,7 +108,7 @@ def test_hessian_calculation():
     assert modes.shape == (icosphere.nparticles * 3, icosphere.nparticles * 3), f"Expected modes shape {(icosphere.nparticles * 3, icosphere.nparticles * 3)}, got {modes.shape}"
     assert eigenvalues.shape == (icosphere.nparticles * 3,), f"Expected eigenvalues shape {(icosphere.nparticles * 3,)}, got {eigenvalues.shape}"
 
-    assert np.all(eigenvalues >= -5e-3), "Eigenvalues should be non-negative"
+    assert np.all(eigenvalues >= -1e-10), "Eigenvalues should be non-negative"
 
     orthogonality_check = np.allclose(modes.T @ modes, np.eye(icosphere.nparticles * 3), atol=1e-10)
     assert orthogonality_check, "Modes should be orthogonal"

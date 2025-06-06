@@ -21,6 +21,7 @@ def create_particle_pair():
     
     return pos, bonds
 
+
 def test_hessian_symmetry():
     """
     Test the symmetry of the Hessian matrix.
