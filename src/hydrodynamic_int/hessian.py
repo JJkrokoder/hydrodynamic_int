@@ -3,6 +3,7 @@ import numpy as np
 import os
 import tempfile
 from typing import Iterable
+import cupy as cp
 
 def read_hessian_file(file_path):
     
