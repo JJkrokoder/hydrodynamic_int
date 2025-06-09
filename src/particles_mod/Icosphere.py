@@ -285,8 +285,9 @@ class IcoSphere:
             hessian = self.calculate_hessian(method=method)
             self.hessian = hessian
         eigenvalues, eigenvectors = diagonalize_hessian(hessian)
-        eigenvalues = np.sort(eigenvalues)
         modes = eigenvectors[:, np.argsort(eigenvalues)]
+        eigenvalues = np.sort(eigenvalues)
+        
         return modes, eigenvalues
 
     

@@ -126,6 +126,7 @@ def test_modes_and_eigenvalues():
     assert modes.shape == (icosphere.nparticles * 3, icosphere.nparticles * 3), f"Expected modes shape {(icosphere.nparticles * 3, icosphere.nparticles * 3)}, got {modes.shape}"
     assert eigenvalues.shape == (icosphere.nparticles * 3,), f"Expected eigenvalues shape {(icosphere.nparticles * 3,)}, got {eigenvalues.shape}"
 
+    assert np.all(np.diff(eigenvalues) >= 0), "Eigenvalues should be sorted in non-decreasing order"
     assert np.all(eigenvalues >= -1e-12), "Eigenvalues should be non-negative"
 
     orthogonality_check = np.allclose(modes.T @ modes, np.eye(icosphere.nparticles * 3), atol=1e-10)
