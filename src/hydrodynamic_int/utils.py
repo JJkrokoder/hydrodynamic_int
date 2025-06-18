@@ -1,26 +1,32 @@
 import numpy as np
 import libMobility as lb
 
-def getMobilityTensor(positions, solver):
+def getMobilityTensor(positions: np.ndarray, solver) -> np.ndarray:
     '''
     This function calculates the mobility tensor of a system of particles given their positions and a solver object.
     The solver must be initialized before calling this function.
     
     Parameters
     ----------
-    positions: numpy array
-        The positions of the particles in the system    
-    solver: SelfMobility object
-        The solver object used to calculate the mobility tensor
+    positions:
+        The positions of the particles in the system in (N, 3) format, where N is the number of particles
+    solver: 
+        The libMobility solver object used to calculate the mobility tensor
     
     Returns
     -------
-    mobility_tensor: numpy array
-        The mobility tensor of the system
+    mobility_tensor:
+        The mobility tensor of the system in xyz conventional coordinate basis
+
+    Notes
+    -----
+    The mobility tensor is calculated by applying a unit force to each particle in the system and measuring the resulting velocity.
+    The resulting mobility tensor is a square matrix of size (3N, 3N), where N is the number of particles.
     '''
 
+    solver.setPositions(positions)
     numberparticles = positions.shape[0]
-    # Perform the algorithm to obtain the mobility tensor
+
     mobility_tensor = np.zeros((numberparticles*3, numberparticles*3))
     for i in range(numberparticles*3):
         force = np.zeros((numberparticles, 3))
@@ -28,7 +34,6 @@ def getMobilityTensor(positions, solver):
         velocity = solver.Mdot(force)[0]
         mobility_tensor[:, i] = velocity.reshape(-1, 1).flatten()
 
-    # Return the mobility tensor as a matrix
     return mobility_tensor
 
 def getMobilityTensorRPY(positions, hyd_radius = 1.0, viscosity = 1.0, boundary_conditions = ['open', 'open', 'open']):
@@ -74,3 +79,6 @@ def getMobilityTensorRPY(positions, hyd_radius = 1.0, viscosity = 1.0, boundary_
 
     # Return the mobility tensor as a matrix
     return mobility_tensor
+
+
+
