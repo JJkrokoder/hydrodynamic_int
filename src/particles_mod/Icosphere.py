@@ -144,7 +144,7 @@ class IcoSphere:
             "units": [{"type": "none"}],
             "types": [{"type": "basic"}],
             "ensemble": [
-                {"type": "NVT", "parameters": {"box": [100.0, 100.0, 100.0],
+                {"type": "NVT", "parameters": {"box": [1000.0, 1000.0, 1000.0],
                                             "temperature": 0.0}}
             ],
             "integrators": [

@@ -91,7 +91,7 @@ def create_simulation(positions : Iterable[float], bonds: dict, output_dir: str,
         "ensemble": {
             "type": ["Ensemble", "NVT"],
             "labels": ["box", "temperature"],
-            "data": [[[100, 100, 100], 0.0]]
+            "data": [[[1000, 1000, 1000], 0.0]]
         }
     }
 
