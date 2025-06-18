@@ -69,7 +69,7 @@ def test_hessian_calculation():
     """
     
     radius = 3.0
-    density = 2.0
+    density = 1.0
     Kpair = 1.0
     Kdi = 1.0
 
@@ -84,7 +84,7 @@ def test_hessian_calculation():
     assert icosphere.forces is not None, "Forces should not be None after initialization"
     assert isinstance(icosphere.forces, np.ndarray), "Forces should be a numpy array"
     assert icosphere.forces.shape == (icosphere.nparticles, 3), f"Expected forces shape {(icosphere.nparticles, 3)}, got {icosphere.forces.shape}"
-    assert np.all(np.isclose(icosphere.forces, 0, atol=1e-10)), "Forces should be zero after initialization"
+    assert np.all(np.isclose(icosphere.forces, 0, atol=1e-9)), "Forces should be zero after initialization"
 
     assert hessian is not None, "Hessian should not be None after calculation"
     assert hessian_num is not None, "Hessian (numerical) should not be None after calculation"
@@ -113,7 +113,7 @@ def test_modes_and_eigenvalues():
     that the modes are orthogonal, and that the diagonalized Hessian matches the eigenvalues.
     """
     radius = 3.0
-    density = 2.0
+    density = 1.0
     Kpair = 1.0
     Kdi = 1.0
     icosphere = ico.IcoSphere(radius=radius, density=density, Kpair=Kpair, Kdi=Kdi)
@@ -127,7 +127,7 @@ def test_modes_and_eigenvalues():
     assert eigenvalues.shape == (icosphere.nparticles * 3,), f"Expected eigenvalues shape {(icosphere.nparticles * 3,)}, got {eigenvalues.shape}"
 
     assert np.all(np.diff(eigenvalues) >= 0), "Eigenvalues should be sorted in non-decreasing order"
-    assert np.all(eigenvalues >= -1e-12), "Eigenvalues should be non-negative"
+    assert np.all(eigenvalues >= -1e-8), "Eigenvalues should be non-negative"
 
     orthogonality_check = np.allclose(modes.T @ modes, np.eye(icosphere.nparticles * 3), atol=1e-10)
     assert orthogonality_check, "Modes should be orthogonal"

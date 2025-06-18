@@ -3,14 +3,17 @@ import libMobility as lm
 import numpy as np
 from pytest import mark
 
-def create_default_solver(method="SelfMobility"):
+def create_default_solver(method="SelfMobility", wallheight: float = 0.0):
     """Create a default solver for testing purposes."""
     if method == "SelfMobility":
         solver = lm.SelfMobility("open", "open", "open")
         solver.setParameters(5)
-    else:
+    elif method == "NBody":
         solver = lm.NBody("open", "open", "open")
         solver.setParameters()
+    elif method == "NBodywall":
+        solver = lm.NBody("open", "open", "single_wall")
+        solver.setParameters(wallHeight=wallheight)
     solver.initialize(
         temperature=0,
         viscosity=1/(6 * np.pi),  # Viscosity for a sphere in a fluid
@@ -18,6 +21,13 @@ def create_default_solver(method="SelfMobility"):
         needsTorque=False,
     )
     return solver
+
+def create_particle_cloud(numberparticles: int = 10, boxsize: float = 1.0, height: float = 1.0):
+    """Create a random particle cloud within a cubic box, displaced in the z-direction."""
+    positions = np.random.rand(numberparticles, 3) * boxsize + np.array([0, 0, height])
+    return positions
+
+    
     
     
 @mark.parametrize("numberparticles", [1, 10])
@@ -56,4 +66,24 @@ def test_NBody_SelfMobity_consistency(distance_log):
 
     assert np.allclose(mobility_tensor_self, mobility_tensor_nbody, atol=absolute_error), \
            "Mobility tensors from SelfMobility and NBody should be consistent within the absolute error at a given distance."
-    
+
+
+@mark.parametrize("boxsize", [1.0, 10.0])
+@mark.parametrize("numberparticles", range(1, 11, 2))
+def test_consistency_NBody_NBodywall(boxsize, numberparticles):
+    """Test that the NBody and NBodywall methods yield consistent results for particles in a wall boundary condition 
+    when the particles are far from the wall."""
+    height = 1e7
+    positions = create_particle_cloud(numberparticles=numberparticles, boxsize=boxsize, height=height)
+
+    solver_nbody = create_default_solver("NBody")
+    mobility_tensor_nbody = hydint.getMobilityTensor(positions, solver_nbody)
+
+    solver_nbodywall = create_default_solver("NBodywall")
+    mobility_tensor_nbodywall = hydint.getMobilityTensor(positions, solver_nbodywall)
+
+    assert np.allclose(mobility_tensor_nbody, mobility_tensor_nbodywall), \
+           "Mobility tensors from NBody and NBodywall should be consistent."
+
+
+

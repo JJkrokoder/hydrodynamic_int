@@ -6,6 +6,23 @@ import tempfile
 import json
 from hydrodynamic_int.hessian import obtainHessian, diagonalize_hessian, read_hessian_file
 import pyUAMMD
+from hydrodynamic_int.utils import getMobilityTensor
+
+def reconstruct_modes(modes: np.ndarray, mobility_matrix: np.ndarray, block_indices: list) -> np.ndarray:
+    """
+    """
+    new_modes = np.copy(modes)
+    mod_space_mobility = modes.T @ mobility_matrix @ modes
+    for block_index in range(len(block_indices)):
+        if block_index > 0:
+            start, end = block_indices[block_index-1], block_indices[block_index]
+        else:
+            start, end = 0, block_indices[block_index]
+        _, eigenvectors = np.linalg.eigh(mod_space_mobility[start:end, start:end])
+        new_modes[:, start:end] = modes[:, start:end] @ eigenvectors
+
+    return new_modes
+
 
 def preliminary_structured_simulation(positions: Iterable[float], bonds: dict):
     """
@@ -289,6 +306,8 @@ class IcoSphere:
         eigenvalues = np.sort(eigenvalues)
         
         return modes, eigenvalues
+    
+
 
     
 
