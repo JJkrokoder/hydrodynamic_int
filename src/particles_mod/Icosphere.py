@@ -8,9 +8,33 @@ from hydrodynamic_int.hessian import obtainHessian, diagonalize_hessian, read_he
 import pyUAMMD
 from hydrodynamic_int.utils import getMobilityTensor
 
-def reconstruct_modes(modes: np.ndarray, mobility_matrix: np.ndarray, block_indices: list) -> np.ndarray:
+def reconstruct_modes(modes: np.ndarray, mobility_matrix: np.ndarray, block_indices: list = [3, 6]) -> np.ndarray:
     """
+    Reconstruct normal modes based on the mobility matrix structure and the provided block indices.
+    These block indices indicate groups of modes belonging to a same subspace, which will be diagonalized separately.
+
+    Parameters
+    ----------
+    modes : 
+        The initial modes to be reconstructed.
+    mobility_matrix :
+        The mobility matrix used to reconstruct the modes.
+    block_indices : list, optional
+        A list of indices indicating the boundaries of blocks in the mobility matrix.
+        Each block corresponds to a set of modes that will be diagonalized separately.
+
+    Returns
+    -------
+    new_modes :
+        The reconstructed modes after applying the mobility matrix and diagonalizing within the specified blocks.
+    
+        
+    Notes
+    -----
+    The function assumes that the mobility matrix is symmetric and that the modes are orthogonal.
+    The default block indices [3, 6] physically correspond to the first six modes, typically translational and rotational modes of the system.
     """
+    
     new_modes = np.copy(modes)
     mod_space_mobility = modes.T @ mobility_matrix @ modes
     for block_index in range(len(block_indices)):

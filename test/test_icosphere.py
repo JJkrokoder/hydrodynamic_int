@@ -4,6 +4,8 @@ import tempfile
 import os
 from typing import Iterable
 from scipy.spatial.transform import Rotation as R
+from pytest import mark
+
 
 def test_icosphere():
     
@@ -24,6 +26,7 @@ def test_icosphere():
 
     distances = np.linalg.norm(icosphere.positions, axis=1)
     assert np.all(np.isclose(distances, r, atol=1e-12)), "Not all particles are at the expected radius"
+
 
 def test_datageneration():
     '''
@@ -58,7 +61,6 @@ def test_datageneration():
     
     assert np.all(np.isclose(icosphere.positions, positions_array)), "Positions in IcoSphere and data do not match"
                   
-
 
 def test_hessian_calculation():
     """
@@ -106,6 +108,7 @@ def test_hessian_calculation():
     assert np.isclose(traslational_energy, 0, atol=1e-10), "Hessian should not have traslational energy"
     assert np.isclose(traslational_energy_num, 0, atol=1e-6), "Hessian (numerical) should not have traslational energy"
 
+
 def test_modes_and_eigenvalues():
     """
     Test the calculation of modes and eigenvalues from the Hessian of the IcoSphere.
@@ -135,5 +138,79 @@ def test_modes_and_eigenvalues():
     diag_hessian = modes.T @ icosphere.hessian @ modes
     assert diag_hessian.shape == (icosphere.nparticles * 3, icosphere.nparticles * 3), f"Expected diagonalized Hessian shape {(icosphere.nparticles * 3, icosphere.nparticles * 3)}, got {diag_hessian.shape}"
     assert np.all(np.isclose(np.diag(diag_hessian), eigenvalues)), "Diagonalized Hessian should match eigenvalues"
-    
-      
+
+
+def generate_orthogonal_matrix(size, seed=None):
+    """
+    Generate a random orthogonal matrix of the specified size.
+    """
+    if seed is not None:
+        np.random.seed(seed)
+    random_matrix = np.random.rand(size, size)
+    q, r = np.linalg.qr(random_matrix)
+    return q
+
+def generate_symmetric_matrix(size, seed=None):
+    """
+    Generate a random symmetric matrix of the specified size.
+    """
+    if seed is not None:
+        np.random.seed(seed)
+    random_matrix = np.random.rand(size, size)
+    symmetric_matrix = (random_matrix + random_matrix.T) / 2
+    return symmetric_matrix
+
+
+@mark.parametrize("matrix_size", [2, 3, 5])
+def test_reconstruct_modes_without_internal_diag(matrix_size):
+    """
+    Test the reconstruction of modes without internal diagonalization.
+    """
+    modes = generate_orthogonal_matrix(matrix_size)
+    mobility = generate_symmetric_matrix(matrix_size)
+
+    new_modes = ico.reconstruct_modes(modes = modes, mobility_matrix = mobility, block_indices=[])
+
+    assert np.all(modes == new_modes), "Reconstructed modes should match original modes"
+
+
+@mark.parametrize("matrix_size", [4, 6, 7])
+@mark.parametrize("block_indices", [[], [2, 3]])
+def test_reconstructed_modes_orthogonality(matrix_size, block_indices):
+    """
+    Test the orthogonality of reconstructed modes with specified block indices.
+    """
+    modes = generate_orthogonal_matrix(matrix_size)
+    mobility = generate_symmetric_matrix(matrix_size)
+
+    new_modes = ico.reconstruct_modes(modes = modes, mobility_matrix = mobility, block_indices = block_indices)
+
+    assert np.allclose(new_modes.T @ new_modes, np.eye(matrix_size), atol=1e-10), \
+        "Reconstructed modes should be orthogonal"
+
+
+@mark.parametrize("matrix_size", [6, 7, 8])
+@mark.parametrize("block_indices", [[3], [2, 4, 5]])
+def test_new_modes_block_deco(matrix_size, block_indices):
+    """
+    Test that the new modes obtained from reconstruct_modes have the correct diagonal block decomposition
+    """
+    modes = generate_orthogonal_matrix(matrix_size)
+    mobility = generate_symmetric_matrix(matrix_size)
+
+    new_modes = ico.reconstruct_modes(modes = modes, mobility_matrix = mobility, block_indices = block_indices)
+    new_basis_mobility = new_modes.T @ mobility @ new_modes
+
+    for block_index in range(len(block_indices)):
+        end = block_indices[block_index]
+        if block_index == 0:
+            start = 0
+        else:
+            start = block_indices[block_index - 1]
+        
+        block = new_basis_mobility[start:end, start:end]
+        diagonal_block = np.diag(np.diag(block))
+        assert np.allclose(block, diagonal_block), \
+            f"Block {block_index} of mobility should be diagonal in the new modes basis"
+
+
