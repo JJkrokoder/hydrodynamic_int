@@ -5,6 +5,7 @@ import os
 from typing import Iterable
 from scipy.spatial.transform import Rotation as R
 from pytest import mark
+import libMobility as lm
 
 
 def test_icosphere():
@@ -121,7 +122,10 @@ def test_modes_and_eigenvalues():
     Kdi = 1.0
     icosphere = ico.IcoSphere(radius=radius, density=density, Kpair=Kpair, Kdi=Kdi)
 
-    modes, eigenvalues = icosphere.obtain_modes()
+    icosphere.obtain_modes()
+
+    modes = icosphere.modes
+    eigenvalues = icosphere.eigenvalues
 
     assert modes is not None, "Modes should not be None after calculation"
     assert eigenvalues is not None, "Eigenvalues should not be None after calculation"
@@ -214,3 +218,39 @@ def test_new_modes_block_deco(matrix_size, block_indices):
             f"Block {block_index} of mobility should be diagonal in the new modes basis"
 
 
+def create_default_solver(method="SelfMobility", wallheight: float = 0.0):
+    """Create a default solver for testing purposes."""
+    if method == "SelfMobility":
+        solver = lm.SelfMobility("open", "open", "open")
+        solver.setParameters(5)
+    elif method == "NBody":
+        solver = lm.NBody("open", "open", "open")
+        solver.setParameters()
+    elif method == "NBodywall":
+        solver = lm.NBody("open", "open", "single_wall")
+        solver.setParameters(wallHeight=wallheight)
+    solver.initialize(
+        temperature=0,
+        viscosity=1/(6 * np.pi),  # Viscosity for a sphere in a fluid
+        hydrodynamicRadius=1.0,  # Default hydrodynamic radius
+        needsTorque=False,
+    )
+    return solver
+
+@mark.parametrize("radius, density, Kpair, Kdi", [
+    (5.0, 1.0, 0.5, 1.0),
+    (10.0, 0.2, 1.0, 1.5),
+    (3.0, 0.5, 0.2, 0.8)
+])
+@mark.parametrize("method", [ "NBody"])
+@mark.parametrize("wallheight", [20, 50])
+def test_coupled_mobility_symmetry(radius, density, Kpair, Kdi, method, wallheight):
+    """
+    Test the symmetry of the coupled mobility matrix.
+    """
+    
+    icosphere = ico.IcoSphere(radius=radius, density=density, Kpair=Kpair, Kdi=Kdi)
+    solver = create_default_solver(method=method, wallheight=-wallheight)
+    mobility_matrix = icosphere.obtain_normal_coupled_mobility(solver=solver)
+
+    assert np.allclose(mobility_matrix, mobility_matrix.T, atol=1e-7, rtol=1e-7), "Mobility matrix should be symmetric"

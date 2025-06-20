@@ -30,11 +30,12 @@ def create_particle_cloud(numberparticles: int = 10, boxsize: float = 1.0, heigh
     
     
     
-@mark.parametrize("numberparticles", [1, 10])
-@mark.parametrize("method", ["SelfMobility", "NBody"])
-def test_Mobility_symmetry(numberparticles, method):
+@mark.parametrize("numberparticles", [3, 10])
+@mark.parametrize("method", ["SelfMobility", "NBody", "NBodywall"])
+@mark.parametrize("wall_height", [0.0, 1e7, 2.0, 10.0])
+def test_Mobility_symmetry(numberparticles, method, wall_height):
     """Test that the mobility tensor is symmetric."""
-    solver = create_default_solver(method)
+    solver = create_default_solver(method, wallheight=wall_height)
     positions = np.random.rand(numberparticles, 3)
     mobility_tensor = hydint.getMobilityTensor(positions, solver)
     assert np.allclose(mobility_tensor, mobility_tensor.T, atol=1e-8, rtol=0), \
@@ -82,7 +83,7 @@ def test_consistency_NBody_NBodywall(boxsize, numberparticles):
     solver_nbodywall = create_default_solver("NBodywall")
     mobility_tensor_nbodywall = hydint.getMobilityTensor(positions, solver_nbodywall)
 
-    assert np.allclose(mobility_tensor_nbody, mobility_tensor_nbodywall), \
+    assert np.allclose(mobility_tensor_nbody , mobility_tensor_nbodywall), \
            "Mobility tensors from NBody and NBodywall should be consistent."
 
 

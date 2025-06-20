@@ -34,7 +34,7 @@ def reconstruct_modes(modes: np.ndarray, mobility_matrix: np.ndarray, block_indi
     The function assumes that the mobility matrix is symmetric and that the modes are orthogonal.
     The default block indices [3, 6] physically correspond to the first six modes, typically translational and rotational modes of the system.
     """
-    
+
     new_modes = np.copy(modes)
     mod_space_mobility = modes.T @ mobility_matrix @ modes
     for block_index in range(len(block_indices)):
@@ -325,11 +325,31 @@ class IcoSphere:
         else:
             hessian = self.calculate_hessian(method=method)
             self.hessian = hessian
-        eigenvalues, eigenvectors = diagonalize_hessian(hessian)
-        modes = eigenvectors[:, np.argsort(eigenvalues)]
-        eigenvalues = np.sort(eigenvalues)
-        
-        return modes, eigenvalues
+        eigenvalues, modes = diagonalize_hessian(hessian)
+
+        self.modes = modes
+        self.eigenvalues = eigenvalues
+
+    def obtain_normal_coupled_mobility(self, solver, method: str = 'Analytical') -> np.ndarray:
+        """
+        Obtain the normal coupled mobility matrix of the icosphere structure.
+
+        Returns
+        -------
+        mobility_matrix :
+            The normal coupled mobility matrix of the icosphere structure.
+
+        """
+
+        if not hasattr(self, 'modes'):
+            self.obtain_modes(method=method)
+
+        mobility_matrix = getMobilityTensor(self.positions, solver=solver)
+        self.modes = reconstruct_modes(self.modes, mobility_matrix)
+
+        modes = np.copy(self.modes)
+        coupled_mobility = modes.T @ mobility_matrix @ modes
+        return coupled_mobility
     
 
 
