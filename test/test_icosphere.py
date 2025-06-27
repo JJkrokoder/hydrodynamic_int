@@ -242,8 +242,8 @@ def create_default_solver(method="SelfMobility", wallheight: float = 0.0):
     (10.0, 0.2, 1.0, 1.5),
     (3.0, 0.5, 0.2, 0.8)
 ])
-@mark.parametrize("method", [ "NBody"])
-@mark.parametrize("wallheight", [20, 50])
+@mark.parametrize("method", ["NBody", "SelfMobility", "NBodywall"])
+@mark.parametrize("wallheight", [20, 30, 50])
 def test_coupled_mobility_symmetry(radius, density, Kpair, Kdi, method, wallheight):
     """
     Test the symmetry of the coupled mobility matrix.
