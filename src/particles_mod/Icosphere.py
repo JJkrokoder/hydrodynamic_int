@@ -8,7 +8,79 @@ from hydrodynamic_int.hessian import obtainHessian, diagonalize_hessian, read_he
 import pyUAMMD
 from hydrodynamic_int.utils import getMobilityTensor
 
-def reconstruct_modes(modes: np.ndarray, mobility_matrix: np.ndarray, block_indices: list = [3, 6]) -> np.ndarray:
+def create_traslational_mode(nparticles: int, axis: str = "x") -> np.ndarray:
+    """
+    Create a translational mode for the given number of particles.
+
+    Parameters
+    ----------
+    nparticles : int
+        The number of particles in the system.
+
+    Returns
+    -------
+    mode_tx : np.ndarray
+        A translational mode matrix of shape (nparticles, 3).
+    """
+    mode_t = np.zeros((nparticles, 3))
+    for i in range(nparticles):
+        if axis == "x":
+            mode_t[i, :] = [1.0, 0.0, 0.0]
+        elif axis == "y":
+            mode_t[i, :] = [0.0, 1.0, 0.0]
+        elif axis == "z":
+            mode_t[i, :] = [0.0, 0.0, 1.0]
+    mode_t = mode_t/ (nparticles * 3)**0.5  # Normalize the mode
+    return mode_t.flatten()
+
+def create_rotational_mode(positions: Iterable[float], nparticles: int, axis: str = "x") -> np.ndarray:
+    """
+    Create a rotational mode for the given number of particles.
+
+    Parameters
+    ----------
+    positions : Iterable[float]
+        The positions of the particles in the system.
+    nparticles : int
+        The number of particles in the system.
+    axis : str, optional
+        The axis of rotation, can be "x", "y", or "z". Default is "x".
+
+    Returns
+    -------
+    mode_r : np.ndarray
+        A rotational mode matrix of shape (nparticles, 3).
+    """
+    mode_r = np.zeros((nparticles, 3))
+    for i in range(nparticles):
+        if axis == "x":
+            mode_r[i, :] = [0.0, positions[i, 2], -positions[i, 1]]
+        elif axis == "y":
+            mode_r[i, :] = [positions[i, 2], 0.0, -positions[i, 0]]
+        elif axis == "z":
+            mode_r[i, :] = [-positions[i, 1], positions[i, 0], 0.0]
+    mode_r = mode_r.flatten()
+    norm = np.linalg.norm(mode_r)
+    return mode_r / norm
+
+def create_orthogonal_modes(positions: Iterable[float], modes: np.ndarray) -> np.ndarray:
+    """
+    Create orthogonal modes from a given set of modes and a translational mode.
+    The function uses the Gram-Schmidt process to orthogonalize the modes with respect to the translational mode.
+    """
+    new_modes = np.copy(modes)
+    new_modes [:,0] = create_traslational_mode(int(modes.shape[0]/3))
+    new_modes [:,1] = create_traslational_mode(int(modes.shape[0]/3), axis="y")
+    new_modes [:,2] = create_traslational_mode(int(modes.shape[0]/3), axis="z")
+    new_modes[:, 3] = create_rotational_mode(positions, int(modes.shape[0]/3), axis="x")
+    new_modes[:, 4] = create_rotational_mode(positions, int(modes.shape[0]/3), axis="y")
+    new_modes[:, 5] = create_rotational_mode(positions, int(modes.shape[0]/3), axis="z")
+
+    for i in range(6,modes.shape[1]):
+        new_modes[:, i] -= new_modes[:,:i-1] @ new_modes[:,:i-1].T @ new_modes[:, i]
+    return new_modes
+
+def reconstruct_modes(modes: np.ndarray, mobility_matrix: np.ndarray, block_indices: list = [3, 6], method : str = "default", positions: Iterable[float] = None) -> np.ndarray:
     """
     Reconstruct normal modes based on the mobility matrix structure and the provided block indices.
     These block indices indicate groups of modes belonging to a same subspace, which will be diagonalized separately.
@@ -36,14 +108,20 @@ def reconstruct_modes(modes: np.ndarray, mobility_matrix: np.ndarray, block_indi
     """
 
     new_modes = np.copy(modes)
-    mod_space_mobility = modes.T @ mobility_matrix @ modes
-    for block_index in range(len(block_indices)):
-        if block_index > 0:
-            start, end = block_indices[block_index-1], block_indices[block_index]
-        else:
-            start, end = 0, block_indices[block_index]
-        _, eigenvectors = np.linalg.eigh(mod_space_mobility[start:end, start:end])
-        new_modes[:, start:end] = modes[:, start:end] @ eigenvectors
+
+    if method == "default":
+        new_modes = create_orthogonal_modes(modes=modes, positions=positions)
+    else:
+        mod_space_mobility = modes.T @ mobility_matrix @ modes
+        for block_index in range(len(block_indices)):
+            if block_index > 0:
+                start, end = block_indices[block_index-1], block_indices[block_index]
+            else:
+                start, end = 0, block_indices[block_index]
+            _, eigenvectors = np.linalg.eigh(mod_space_mobility[start:end, start:end])
+            new_modes[:, start:end] = modes[:, start:end] @ eigenvectors
+    
+
 
     return new_modes
 
@@ -127,12 +205,16 @@ class IcoSphere:
         nparticles = round(4 * np.pi * radius**2 * density)
         self.freq_division = round(np.sqrt(1 + (nparticles - 12)/10))
 
+        print(f"Creating icosphere with {nparticles} particles and frequency division {self.freq_division}")
         normalized_positions, self.faces = ico.icosphere(self.freq_division)
+        print("Icosphere created with normalized positions and faces.")
         self.positions = normalized_positions * radius
         self.nparticles = len(self.positions)
         self.density = nparticles / (4 * np.pi * radius**2)
 
+        print("Generating VLMP data for the icosphere.")
         vlmp_data = self._generate_data()
+        print("VLMP data generated.")
         
         positions = vlmp_data['state']['data']
         positions = [pos[1] for pos in positions]
@@ -345,7 +427,7 @@ class IcoSphere:
             self.obtain_modes(method=method)
 
         mobility_matrix = getMobilityTensor(self.positions, solver=solver)
-        self.modes = reconstruct_modes(self.modes, mobility_matrix)
+        self.modes = reconstruct_modes(modes = self.modes, mobility_matrix=mobility_matrix, positions=self.positions)
 
         modes = np.copy(self.modes)
         coupled_mobility = modes.T @ mobility_matrix @ modes
