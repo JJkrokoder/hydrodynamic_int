@@ -13,8 +13,8 @@ dependencies:
   - pytest
   - pip
   - uammd-structured=*=*double*
-  - pyUAMMD
   - pip:  # These are the packages that will be installed with pip
+    - pyUAMMD
     - matplotlib
     - pyvista
     - icosphere
