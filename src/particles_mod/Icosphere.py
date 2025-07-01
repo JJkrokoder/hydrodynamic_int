@@ -30,8 +30,10 @@ def create_traslational_mode(nparticles: int, axis: str = "x") -> np.ndarray:
             mode_t[i, :] = [0.0, 1.0, 0.0]
         elif axis == "z":
             mode_t[i, :] = [0.0, 0.0, 1.0]
-    mode_t = mode_t/ (nparticles * 3)**0.5  # Normalize the mode
-    return mode_t.flatten()
+    
+    mode_t = mode_t.flatten()
+    
+    return mode_t/ np.linalg.norm(mode_t)
 
 def create_rotational_mode(positions: Iterable[float], nparticles: int, axis: str = "x") -> np.ndarray:
     """
@@ -54,7 +56,7 @@ def create_rotational_mode(positions: Iterable[float], nparticles: int, axis: st
     mode_r = np.zeros((nparticles, 3))
     for i in range(nparticles):
         if axis == "x":
-            mode_r[i, :] = [0.0, positions[i, 2], -positions[i, 1]]
+            mode_r[i, :] = [0.0, -positions[i, 2], positions[i, 1]]
         elif axis == "y":
             mode_r[i, :] = [positions[i, 2], 0.0, -positions[i, 0]]
         elif axis == "z":
@@ -69,16 +71,26 @@ def create_orthogonal_modes(positions: Iterable[float], modes: np.ndarray) -> np
     The function uses the Gram-Schmidt process to orthogonalize the modes with respect to the translational mode.
     """
     new_modes = np.copy(modes)
-    new_modes [:,0] = create_traslational_mode(int(modes.shape[0]/3))
+            
+    
+    new_modes [:,0] = create_traslational_mode(int(modes.shape[0]/3), axis="x")
     new_modes [:,1] = create_traslational_mode(int(modes.shape[0]/3), axis="y")
     new_modes [:,2] = create_traslational_mode(int(modes.shape[0]/3), axis="z")
-    new_modes[:, 3] = create_rotational_mode(positions, int(modes.shape[0]/3), axis="x")
-    new_modes[:, 4] = create_rotational_mode(positions, int(modes.shape[0]/3), axis="y")
-    new_modes[:, 5] = create_rotational_mode(positions, int(modes.shape[0]/3), axis="z")
+    new_modes [:,3] = create_rotational_mode(positions, int(modes.shape[0]/3), axis="x")
+    new_modes [:,4] = create_rotational_mode(positions, int(modes.shape[0]/3), axis="y")
+    new_modes [:,5] = create_rotational_mode(positions, int(modes.shape[0]/3), axis="z")
+    
 
-    for i in range(6,modes.shape[1]):
-        new_modes[:, i] -= new_modes[:,:i-1] @ new_modes[:,:i-1].T @ new_modes[:, i]
+    # Orthogonalize the modes using Gram-Schmidt process
+    for i in range(6, modes.shape[1]):
+        mode = modes[:, i]
+        for j in range(i):
+            mode -= np.dot(mode, new_modes[:, j]) * new_modes[:, j]
+        mode /= np.linalg.norm(mode)
+        new_modes[:, i] = mode
+    
     return new_modes
+
 
 def reconstruct_modes(modes: np.ndarray, mobility_matrix: np.ndarray, block_indices: list = [3, 6], method : str = "default", positions: Iterable[float] = None) -> np.ndarray:
     """
@@ -110,6 +122,8 @@ def reconstruct_modes(modes: np.ndarray, mobility_matrix: np.ndarray, block_indi
     new_modes = np.copy(modes)
 
     if method == "default":
+        if positions is None:
+            raise ValueError("Positions must be provided for default mode reconstruction.")
         new_modes = create_orthogonal_modes(modes=modes, positions=positions)
     else:
         mod_space_mobility = modes.T @ mobility_matrix @ modes
@@ -210,6 +224,7 @@ class IcoSphere:
         print("Icosphere created with normalized positions and faces.")
         self.positions = normalized_positions * radius
         self.nparticles = len(self.positions)
+        print(f"Number of particles: {self.nparticles}")
         self.density = nparticles / (4 * np.pi * radius**2)
 
         print("Generating VLMP data for the icosphere.")

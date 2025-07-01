@@ -173,9 +173,41 @@ def test_reconstruct_modes_without_internal_diag(matrix_size):
     modes = generate_orthogonal_matrix(matrix_size)
     mobility = generate_symmetric_matrix(matrix_size)
 
-    new_modes = ico.reconstruct_modes(modes = modes, mobility_matrix = mobility, block_indices=[])
+    new_modes = ico.reconstruct_modes(modes = modes, mobility_matrix = mobility, block_indices=[], method='mobility_block')
 
     assert np.all(modes == new_modes), "Reconstructed modes should match original modes"
+
+@mark.parametrize("radius, density", [
+    (3.0, 0.5),
+])
+def test_reconstruct_modes_default_orthogonality(radius, density):
+    """
+    Test the reconstruction of modes using the default method.
+    """
+    icosphere = ico.IcoSphere(radius=radius, density=density)
+    nparticles = icosphere.nparticles
+    modes = generate_orthogonal_matrix(nparticles * 3)
+    mobility = generate_symmetric_matrix(nparticles * 3)
+
+    positions = icosphere.positions
+
+    new_modes = ico.reconstruct_modes(modes = modes, mobility_matrix = mobility, positions=positions)
+
+    assert new_modes.shape == (nparticles * 3, nparticles * 3), \
+        f"Expected new modes shape {(nparticles * 3, nparticles * 3)}, got {new_modes.shape}"
+    
+    np.set_printoptions(precision=5, suppress=True)
+    print("Orthogonality check:")
+    orthogonality_check = new_modes.T @ new_modes
+    print(orthogonality_check[:6, 6:12])
+    print(orthogonality_check[6:12, :6].T)
+
+    assert np.allclose(new_modes[:,:6].T @ new_modes[:,:6], np.eye(6)), \
+        "The first six modes should be orthogonal and normalized."
+
+    assert np.allclose(new_modes.T @ new_modes, np.eye(nparticles * 3), atol=1e-10), \
+        "Reconstructed modes should be orthogonal using the default method"
+
 
 
 @mark.parametrize("matrix_size", [4, 6, 7])
@@ -187,7 +219,7 @@ def test_reconstructed_modes_orthogonality(matrix_size, block_indices):
     modes = generate_orthogonal_matrix(matrix_size)
     mobility = generate_symmetric_matrix(matrix_size)
 
-    new_modes = ico.reconstruct_modes(modes = modes, mobility_matrix = mobility, block_indices = block_indices)
+    new_modes = ico.reconstruct_modes(modes = modes, mobility_matrix = mobility, block_indices = block_indices, method='mobility_block')
 
     assert np.allclose(new_modes.T @ new_modes, np.eye(matrix_size), atol=1e-10), \
         "Reconstructed modes should be orthogonal"
@@ -202,7 +234,7 @@ def test_new_modes_block_deco(matrix_size, block_indices):
     modes = generate_orthogonal_matrix(matrix_size)
     mobility = generate_symmetric_matrix(matrix_size)
 
-    new_modes = ico.reconstruct_modes(modes = modes, mobility_matrix = mobility, block_indices = block_indices)
+    new_modes = ico.reconstruct_modes(modes = modes, mobility_matrix = mobility, block_indices = block_indices, method='mobility_block')
     new_basis_mobility = new_modes.T @ mobility @ new_modes
 
     for block_index in range(len(block_indices)):
@@ -233,13 +265,12 @@ def create_default_solver(method="SelfMobility", wallheight: float = 0.0):
         temperature=0,
         viscosity=1/(6 * np.pi),  # Viscosity for a sphere in a fluid
         hydrodynamicRadius=1.0,  # Default hydrodynamic radius
-        needsTorque=False,
     )
     return solver
 
 @mark.parametrize("radius, density, Kpair, Kdi", [
-    (5.0, 1.0, 0.5, 1.0),
-    (10.0, 0.2, 1.0, 1.5),
+    (3.0, 1.0, 0.5, 1.0),
+    (7.0, 0.2, 1.0, 1.5),
     (3.0, 0.5, 0.2, 0.8)
 ])
 @mark.parametrize("method", ["NBody", "SelfMobility", "NBodywall"])
