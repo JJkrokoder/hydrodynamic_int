@@ -92,7 +92,7 @@ def create_orthogonal_modes(positions: Iterable[float], modes: np.ndarray) -> np
     return new_modes
 
 
-def reconstruct_modes(modes: np.ndarray, mobility_matrix: np.ndarray, block_indices: list = [3, 6], method : str = "default", positions: Iterable[float] = None) -> np.ndarray:
+def reconstruct_modes(modes: np.ndarray, mobility_matrix: np.ndarray = None, block_indices: list = [3, 6], method : str = "default", positions: Iterable[float] = None) -> np.ndarray:
     """
     Reconstruct normal modes based on the mobility matrix structure and the provided block indices.
     These block indices indicate groups of modes belonging to a same subspace, which will be diagonalized separately.
@@ -427,7 +427,7 @@ class IcoSphere:
         self.modes = modes
         self.eigenvalues = eigenvalues
 
-    def obtain_normal_coupled_mobility(self, solver, method: str = 'Analytical') -> np.ndarray:
+    def obtain_normal_coupled_mobility(self, solver, method: str = 'Analytical', reconstr_modes: bool = False) -> np.ndarray:
         """
         Obtain the normal coupled mobility matrix of the icosphere structure.
 
@@ -441,9 +441,12 @@ class IcoSphere:
         if not hasattr(self, 'modes'):
             self.obtain_modes(method=method)
 
+        if reconstr_modes:
+            if not hasattr(self, 'mobility_matrix'):
+                self.mobility_matrix = getMobilityTensor(self.positions, solver=solver)
+            self.modes = reconstruct_modes(modes=self.modes, mobility_matrix=self.mobility_matrix, method = "mobility")
         mobility_matrix = getMobilityTensor(self.positions, solver=solver)
-        self.modes = reconstruct_modes(modes = self.modes, mobility_matrix=mobility_matrix, positions=self.positions)
-
+        
         modes = np.copy(self.modes)
         coupled_mobility = modes.T @ mobility_matrix @ modes
         return coupled_mobility
