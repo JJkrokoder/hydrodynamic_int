@@ -2,6 +2,8 @@ name: hydint_env
 channels:
   - conda-forge
   - stochasticHydroTools
+  - complexfluidsuam
+  - ComplexFluidsUAM
 
 dependencies:
   - python
@@ -11,7 +13,13 @@ dependencies:
   - libMobility
   - pytest
   - pip
+  - uammd-structured=*=*double*
+  - pyuammd-structured
   - pip:  # These are the packages that will be installed with pip
+    - pyUAMMD
     - matplotlib
+    - pyvista
+    - icosphere
+    - pyVLMP
 
   

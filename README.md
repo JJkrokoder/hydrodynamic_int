@@ -8,7 +8,7 @@ This repository contains code and resources for learning about hydrodynamic inte
 
 ## Features
 
-- Code examples
+- Code examples in jupyter notebooks
 - Unitary tests
 - Experimental data
 
@@ -17,7 +17,10 @@ This repository contains code and resources for learning about hydrodynamic inte
 To use the code in this repository, follow these steps:
 
 1. Clone the repository: `git clone https://github.com/JJkrokoder/hydrodynamic_int.git` or `git clone git@github.com:JJkrokoder/hydrodynamic_int.git`
-2. Install the required dependencies: `conda install -f environment.yml`
+2. Install the required dependencies in a new environment: `conda install -f environment.yml`
+3. Install the package in this environment: `pip install .`
 
 ## Usage
+
+1. To run an example go to the examples folder and execute one of the scripts within the diferent subdirectories
 

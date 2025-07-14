@@ -3,10 +3,12 @@ import numpy as np
 import os
 import tempfile
 from typing import Iterable
+#import cupy as cp
 
 def read_hessian_file(file_path):
     
     hessian_f = np.loadtxt(file_path)
+    print(f"Read Hessian file {file_path} with shape {hessian_f.shape}")
     # Hessian file has shape (npairs, 11), first two columns are the pair indices
     assert (
         hessian_f.shape[1] == 11
@@ -23,45 +25,44 @@ def read_hessian_file(file_path):
     hessian[i, j] = matrices
     return hessian
 
-def obtain_Box(positions):
+
+def create_simulation(positions : Iterable[float], bonds: dict, output_dir: str, method : str = "Numerical") -> pyUAMMD.simulation:
     """
-    Obtain the simulation box from the positions of the particles.
-    
+    Create a pyUAMMD simulation object with the given positions and bonds. Specifies an
+    output file for the Hessian matrix.
+
     Parameters
     ----------
-    positions : list of tuples
-        A list of tuples representing the positions of atoms.
-    
-    Returns
-    -------
-    box : numpy.ndarray
-        The simulation box dimensions.
-    """
-
-    # Create a box based on the maximum and minimum coordinates differences of the particles
-    max_coords = np.max(positions[:][1], axis=0)
-    min_coords = np.min(positions[:][1], axis=0)
-    box = [(max_coords[i] - min_coords[i])*1.5 for i in range(3)]
-    return box
-
-def create_simulation(positions, bonds, output_file_path):
-    """
-    Create a pyUAMMD simulation object with the given positions and bonds.
-    
-    Parameters
-    ----------
-    positions : list of tuples
-        A list of tuples representing the positions of atoms.
-    bonds : list of tuples
-        A list of tuples representing the bonds between atoms.
-    output_file_path : str
-        The path to the output file for the simulation.
+    positions :
+        Positions of atoms. This should be a list of lists or a numpy array of shape (n, 3),
+        where n is the number of atoms and 3 represents the x, y, z coordinates.
+    bonds :
+        A UAMMD-structured dictionary representing the bonds between atoms. This should
+        contain information about the types of bonds and their parameters.
+    output_file_path :
+        The path to the output file for the simulation. This file will be used to
+        store the Hessian matrix after the simulation is run.
     
     Returns
     -------
     simulation : pyUAMMD.simulation
         The created pyUAMMD simulation object.
+
+    Example
+    -------
+    >>> positions = [[0, 0, 0], [1, 1, 1], [2, 2, 2]]
+    >>> bonds = {"myBond": {"type": ["Bond", "Harmonic"], "parameters": {}, "labels": ["id_i", "id_j", "K", "r0"]}}
+    >>> bonds["myBond"]["data"] = [[0, 1, 1.0, 1.0], [1, 2, 1.0, 1.0]]
+    >>> output_file_path = "hessian.txt"
+    >>> simulation = create_simulation(positions, bonds, output_file_path)
+
+    Notes
+    -----
+    All particles are assumed to be of type "A" with a mass of 1.0, radius of 0.5,
+    and charge of 0.0.
     """
+
+    relaxation_steps = 1000
 
     # Create a pyUAMMD simulation object
     simulation = pyUAMMD.simulation()
@@ -90,7 +91,7 @@ def create_simulation(positions, bonds, output_file_path):
         "ensemble": {
             "type": ["Ensemble", "NVT"],
             "labels": ["box", "temperature"],
-            "data": [[[100, 100, 100], 0.0]]
+            "data": [[[1000, 1000, 1000], 0.0]]
         }
     }
 
@@ -99,7 +100,7 @@ def create_simulation(positions, bonds, output_file_path):
         "bbk": {
             "type": ["Langevin", "BBK"],
             "parameters": {
-                "timeStep": 0.000,
+                "timeStep": 0.05,
                 "frictionConstant": 1.0
             }
         },
@@ -107,7 +108,7 @@ def create_simulation(positions, bonds, output_file_path):
         "schedule": {
             "type": ["Schedule", "Integrator"],
             "labels": ["order", "integrator", "steps"],
-            "data": [[1, "bbk", 1]]
+            "data": [[1, "bbk", relaxation_steps + 1]]
         }
     }
 
@@ -123,30 +124,49 @@ def create_simulation(positions, bonds, output_file_path):
             "data": [[i, "A"] for i in range(len(positions))]
         }
     }
+
     # Initialize the force field dictionary
     simulation["topology"]["forceField"] = bonds
     # Configure Simulation Steps
     simulation["simulationStep"] = {
-        # Output simulation information periodically
-        "info": {
-            "type": ["UtilsStep", "InfoStep"],
-            "parameters": {"intervalStep": 1}
-        },
         # Output the Hessian matrix
-        "hessianMeasure": {
+        "hessianmeasure": {
             "type": ["MechanicalMeasure", "HessianMeasure"],
             "parameters": {
-                "intervalStep": 1,
-                "outputFilePath": output_file_path,
-                "mode": "Analytical",
-                "outputPrecision": 6
+                "intervalStep": relaxation_steps,
+                "outputFilePath": f"{output_dir}/hessian.txt",
+                "mode": method,
+                "outputPrecision": 15,
+                "startStep": 1
             }
         }
     }
+
+    simulation["simulationStep"]["positions"] = {
+        "type": ["WriteStep", "WriteStep"],
+        "parameters": {
+            "intervalStep": relaxation_steps,
+            "startStep": 1,
+            "outputFilePath": f"{output_dir}/positions",
+            "outputFormat": "sp",
+            "pbc": True
+        }
+    }
+
+    simulation["simulationStep"]["ForceMeasure"] = {
+        "type": ["MechanicalMeasure", "PairwiseForceMeasure"],
+        "parameters": {
+            "intervalStep": relaxation_steps,
+            "startStep": 1,
+            "outputFilePath": f"{output_dir}/forces.txt",
+            "mode": "Total_force",
+        }
+    }
+
     return simulation
 
 
-def obtainHessian (positions: Iterable[float] , bonds: dict) -> np.ndarray:
+def obtainHessian (positions: Iterable[float] , bonds: dict, create_sp : bool = False, method : str = "Numerical") -> np.ndarray:
     """
     Obtain the Hessian matrix from the positions and bonds.
     
@@ -162,11 +182,14 @@ def obtainHessian (positions: Iterable[float] , bonds: dict) -> np.ndarray:
     hessian : 
         The Hessian matrix.
     """
-    with tempfile.TemporaryDirectory() as tmpdir:
-        hessian_file_path = os.path.join(tmpdir, "hessian.txt")
-        simulation = create_simulation(positions, bonds, hessian_file_path)
+    with tempfile.TemporaryDirectory() as tmpdir: 
+        if create_sp:
+            current_dir = os.getcwd()
+            simulation = create_simulation(positions, bonds, current_dir, method = method)
+        else:
+            simulation = create_simulation(positions, bonds, tmpdir, method = method)
         simulation.run()
-        hessian = read_hessian_file(hessian_file_path)
+        hessian = read_hessian_file(f"{tmpdir}/hessian.txt")
         
     return hessian
 
@@ -177,33 +200,24 @@ def diagonalize_hessian(hessian: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     hessian :
-        The Hessian matrix in (nparticles, nparticles, 3, 3) format.
+        The Hessian matrix in (nparticles * 3, nparticles * 3) format.
     
     Returns
     -------
     eigenvalues :
         The eigenvalues of the Hessian matrix.
     eigenvectors :
-        The eigenvectors of the Hessian matrix in (nparticles * 3, nparticles, 3) format.
-    hessian_reshaped :
-        The Hessian matrix reshaped to (nparticles * 3, nparticles * 3) format.
-    eigenvectors_reshaped :
-        The eigenvectors reshaped to (nparticles * 3, nparticles * 3) format.
+        The eigenvectors of the Hessian matrix in (nparticles * 3, nparticles * 3) format.
     """
 
-    nparticles = hessian.shape[0]
-    # Transposing is done in order to change al the coordinates and indexes
-    # for the second particle before changing the coordinates of the first particle
-    preprocessed_hessian = hessian.transpose(0, 2, 1, 3)
-    hessian_reshaped = preprocessed_hessian.reshape((nparticles * 3, nparticles * 3)) 
-    eigenvalues, eigenvectors = np.linalg.eigh(hessian_reshaped)
+    
+    hessian = (hessian + hessian.T) / 2  # Ensure symmetry
+    eigenvalues, eigenvectors = np.linalg.eigh(hessian)
     sorted_indices = np.argsort(eigenvalues)
     eigenvalues = eigenvalues[sorted_indices]
-    eigenvectors_reshaped = eigenvectors[:, sorted_indices]
-    # Reshape eigenvectors set for a mode decomposition
-    eigenvectors = eigenvectors_reshaped.T.reshape((nparticles * 3, nparticles, 3))
+    eigenvectors = eigenvectors[:, sorted_indices]
 
-    return eigenvalues, eigenvectors, hessian_reshaped, eigenvectors_reshaped
+    return eigenvalues, eigenvectors
 
 
 

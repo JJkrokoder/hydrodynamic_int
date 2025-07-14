@@ -1,67 +1,66 @@
 import numpy as np
+from typing import Iterable
 
 
-class HalfPipe:
+class Plain_Membrane:
     """
-    Class to generate a half-pipe structure with particles.
+    Class to generate a Plane Membrane structure with particles.
     
     Parameters
     ----------
-    HP_length :
-        Length of the half-pipe.
-    HP_radius :
-        Radius of the half-pipe.
-    HP_amplitude :
-        Semiangular amplitude of the half-pipe.
-    HP_density :
-        Density of the half-pipe.
+    LengthX :
+        Length of the membrane in the X direction.
+    LengthY :
+        Length of the membrane in the Y direction.
+    Density :
+        Particle density of the membrane.
     Kp :
         Spring constant for the pair bonds.
     Ka :
         Spring constant for the angular bonds.
     """
 
-    def __init__(self, HP_length: float = 1.0, HP_radius: float = 1.0, HP_amplitude: float = np.pi/2, HP_density: float = 1.0, Kp: float = 1.0, Ka: float = 1.0):
-        """
-        Initializes the HalfPipe class with the given parameters.
-        """
-        self.HP_length = HP_length
-        self.HP_radius = HP_radius
-        self.HP_amplitude = HP_amplitude
-        self.HP_density = HP_density
+    def __init__(self, LengthX: float = 5.0, LengthY: float = 5.0, Density: float = 1.0, Kp: float = 1.0, Ka: float = 1.0):
+        self.LengthX = LengthX
+        self.LengthY = LengthY
+        self.Density = Density
         self.Kp = Kp
         self.Ka = Ka
+
+        # Calculate the number of particles based on the density
+        self.nx = int(np.sqrt(self.Density) * self.LengthX)
+        self.ny = int(np.sqrt(self.Density) * self.LengthY)
+        self.nparticles = self.nx * self.ny
+        self.dx = self.LengthX / (self.nx - 1)
+        self.dy = self.LengthY / (self.ny - 1)
+        self.density = 1/(self.dx * self.dy)
     
-    def generate_positions(self):
+    def generate_positions(self) -> Iterable[float] :
         """
         Generates the positions of the particles in the half-pipe structure.
         
         Returns
         -------
         positions :
-            Positions of the half-pipe particles.
+            Positions of the membrane particles.
         """
         
-        self.ny = int(self.HP_length * np.sqrt(self.HP_density))
-        self.ntheta = int(np.sqrt(self.HP_density) * self.HP_radius * 2 * self.HP_amplitude)
-
-        self.nparticles = self.ny * self.ntheta
-        self.HP_density = self.nparticles / (self.HP_length * self.HP_radius * 2 * self.HP_amplitude)
-
         # Parametrizer arrays
-        y = np.linspace(0, self.HP_length,self.ny)
-        theta = np.linspace(-self.HP_amplitude, self.HP_amplitude, self.ntheta)
+        y = [-self.LengthY/2 + i * self.dy for i in range(self.ny)]
+        x = [-self.LengthX/2 + i * self.dx for i in range(self.nx)]
+        positions = [[i, j, 0] for i in x for j in y]
+        return positions
 
-        return [[self.HP_radius*np.sin(t), j,  self.HP_radius*(1-np.cos(t))] for t in theta for j in y]
-    
-    def generate_pairbonds(self, positions: list) -> list:
+    def generate_pairbonds(self, positions: Iterable[float]) -> Iterable[float]:
         """
-        Generates the pair and angular bonds between the particles in the half-pipe structure.
+        Generates the pair and angular bonds between the particles in the membrane structure. 
+        This seems to be general for any open squared parametrized structure, such as a half-pipe or a strip.
+        The function generates pair bonds between adjacent particles in the x and y directions, as well as diagonal bonds.
 
         Parameters
         ----------
         positions :
-            Positions of the half-pipe particles.
+            Positions of the membrane particles.
         
         Returns
         -------
@@ -72,21 +71,21 @@ class HalfPipe:
         pairbonds = []
 
         # Horizontal bonds
-        for row_id in range(self.ntheta):
+        for row_id in range(self.nx):
             for column_id in range(self.ny - 1):
                 particle_id = row_id * self.ny + column_id
                 distance = np.linalg.norm(np.array(positions[particle_id]) - np.array(positions[particle_id + 1]))
                 pairbonds.append([particle_id, particle_id + 1, self.Kp, distance])
 
         # Vertical bonds
-        for row_id in range(self.ntheta - 1):
+        for row_id in range(self.nx - 1):
             for column_id in range(self.ny):
                 particle_id = row_id * self.ny + column_id
                 distance = np.linalg.norm(np.array(positions[particle_id]) - np.array(positions[particle_id + self.ny]))
                 pairbonds.append([particle_id, particle_id + self.ny, self.Kp, distance])
 
         # Diagonal bonds
-        for row_cell_id in range(self.ntheta - 1):
+        for row_cell_id in range(self.nx - 1):
             for column_cell_id in range(self.ny - 1):
                 particle_id = row_cell_id * self.ny + column_cell_id
                 distance = np.linalg.norm(np.array(positions[particle_id]) - np.array(positions[particle_id + self.ny + 1]))
@@ -98,12 +97,12 @@ class HalfPipe:
     
     def generate_anglebonds(self, positions: list) -> list:
         """
-        Generates the angular bonds between the particles in the half-pipe structure.
+        Generates the angular bonds between the particles in the membrane structure.
 
         Parameters
         ----------
         positions :
-            Positions of the half-pipe particles.
+            Positions of the membrane particles.
         
         Returns
         -------
@@ -114,7 +113,7 @@ class HalfPipe:
         anglebonds = []
 
         # Horizontal angular bonds
-        for row_id in range(self.ntheta):
+        for row_id in range(self.nx):
             for column_id in range(self.ny - 2):
                 particle_id = row_id * self.ny + column_id
                 pos1 = np.array(positions[particle_id])
@@ -126,7 +125,7 @@ class HalfPipe:
                 anglebonds.append([particle_id, particle_id + 1, particle_id + 2, self.Ka, angle])
 
         # Vertical angular bonds
-        for row_id in range(self.ntheta - 2):
+        for row_id in range(self.nx - 2):
             for column_id in range(self.ny):
                 particle_id = row_id * self.ny + column_id
                 pos1 = np.array(positions[particle_id])
@@ -139,35 +138,35 @@ class HalfPipe:
 
         return anglebonds
 
-def construct_structure(length: float = 1.0, radius: float = 1.0, amplitude: float = np.pi/2, density: float = 1.0, Kp: float = 1.0, Ka: float = 1.0) -> tuple:
+def construct_structure(LengthX: float=5.0, LengthY: float=5.0, Density: float=1.0, Kp: float=1.0, Ka: float=1.0) -> tuple:
     """
-    Constructs a half-pipe structure with the given parameters.
+    Constructs the structure of the membrane and generates the positions and bonds.
 
     Parameters
     ----------
-    length :
-        Length of the half-pipe.
-    radius :
-        Radius of the half-pipe.
-    amplitude :
-        Semiangular amplitude of the half-pipe.
-    density :
-        Density of the half-pipe.
-    Kp : float, optional
-        Spring constant for the pair bonds (default is 1.0).
-    Ka : float, optional
-        Spring constant for the angular bonds (default is 1.0).
+    LengthX :
+        Length of the membrane in the X direction.
+    LengthY :
+        Length of the membrane in the Y direction.
+    Density :
+        Particle density of the membrane.
+    Kp :
+        Spring constant for the pair bonds.
+    Ka :
+        Spring constant for the angular bonds.
 
     Returns
     -------
-    tuple :
-        A tuple containing the positions and bonds of the half-pipe structure.
+    positions :
+        Positions of the membrane particles.
+    bonds :
+        Dictionary containing the pair and angular bonds.
     """
     
-    half_pipe = HalfPipe(length, radius, amplitude, density, Kp, Ka)
-    positions = half_pipe.generate_positions()
-    pairbonds = half_pipe.generate_pairbonds(positions)
-    anglebonds = half_pipe.generate_anglebonds(positions)
+    membrane = Plain_Membrane(LengthX=LengthX, LengthY=LengthY, Density=Density, Kp=Kp, Ka=Ka)
+    positions = membrane.generate_positions()
+    pairbonds = membrane.generate_pairbonds(positions)
+    anglebonds = membrane.generate_anglebonds(positions)
 
     # Create a bonds dictionary
     bonds = {
